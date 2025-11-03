@@ -1,0 +1,185 @@
+'use client';
+
+export default function PatientDashboardPage() {
+  // Mock data
+  const appointments = [
+    {
+      id: 1,
+      category: 'Weight Loss',
+      doctorName: 'Dr. John Smith',
+      date: 'November 3, 2025',
+      time: '9:00 AM',
+      status: 'confirmed',
+      price: 50,
+    },
+    {
+      id: 2,
+      category: 'Skin Care',
+      doctorName: 'Dr. Sarah Johnson',
+      date: 'November 10, 2025',
+      time: '2:00 PM',
+      status: 'confirmed',
+      price: 60,
+    },
+    {
+      id: 3,
+      category: 'Hair Loss',
+      doctorName: 'Dr. Mike Williams',
+      date: 'October 28, 2025',
+      time: '11:00 AM',
+      status: 'completed',
+      price: 45,
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">My Appointments</h1>
+          <p className="text-gray-600 mt-2">View and manage your consultations</p>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <button className="w-full md:w-auto bg-green-600 text-white py-2 px-6 rounded-md hover:bg-green-700 transition">
+            + Book New Appointment
+          </button>
+        </div>
+
+        {/* Appointments List */}
+        <div className="space-y-4">
+          {appointments.map((appointment) => (
+            <div key={appointment.id} className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {appointment.category}
+                    </h3>
+                    <span
+                      className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                        appointment.status === 'confirmed'
+                          ? 'bg-green-100 text-green-800'
+                          : appointment.status === 'completed'
+                            ? 'bg-gray-100 text-gray-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                    >
+                      {appointment.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <p className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                      <span>
+                        <span className="font-medium">Doctor:</span> {appointment.doctorName}
+                      </span>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <span>
+                        <span className="font-medium">Date:</span> {appointment.date}
+                      </span>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span>
+                        <span className="font-medium">Time:</span> {appointment.time}
+                      </span>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span>
+                        <span className="font-medium">Price:</span> ${appointment.price}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                {appointment.status === 'confirmed' && (
+                  <div className="flex flex-col gap-2">
+                    <button className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50 transition">
+                      Reschedule
+                    </button>
+                    <button className="px-4 py-2 border border-red-300 text-red-600 text-sm rounded-md hover:bg-red-50 transition">
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
+                {appointment.status === 'completed' && (
+                  <div>
+                    <button className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition">
+                      Book Follow-up
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {appointments.length === 0 && (
+          <div className="bg-white rounded-lg shadow-md p-12 text-center">
+            <p className="text-gray-500 text-lg mb-4">No appointments yet</p>
+            <button className="bg-green-600 text-white py-2 px-6 rounded-md hover:bg-green-700 transition">
+              Book Your First Consultation
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
