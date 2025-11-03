@@ -6,24 +6,47 @@ import { useRouter } from 'next/navigation';
 export default function PatientCheckoutPage() {
   const router = useRouter();
   const [signupData, setSignupData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const data = JSON.parse(localStorage.getItem('patient_signup_data') || '{}');
-    if (!data.categoryId || !data.name || !data.selectedDate) {
+    if (!data.categoryId || !data.name || !data.selectedDate || !data.taskId) {
       router.push('/patient/signup');
       return;
     }
     setSignupData(data);
   }, [router]);
 
-  const handlePayment = (e: React.FormEvent) => {
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
-    // Clear signup data
-    localStorage.removeItem('patient_signup_data');
+    try {
+      // Update task payment status
+      const response = await fetch('/api/patient/task/payment', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId: signupData.taskId,
+        }),
+      });
 
-    // Redirect to dashboard
-    router.push('/patient/dashboard');
+      if (!response.ok) {
+        alert('Payment failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Clear signup data
+      localStorage.removeItem('patient_signup_data');
+
+      // Redirect to dashboard
+      router.push('/patient/dashboard');
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('An error occurred');
+      setLoading(false);
+    }
   };
 
   if (!signupData) {
@@ -104,9 +127,10 @@ export default function PatientCheckoutPage() {
           </button>
           <button
             type="submit"
-            className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition"
+            disabled={loading}
+            className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            Pay ${signupData.categoryPrice}.00
+            {loading ? 'Processing Payment...' : `Pay $${signupData.categoryPrice}.00`}
           </button>
         </div>
       </form>

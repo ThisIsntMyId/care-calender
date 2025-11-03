@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 export default function PatientBookPage() {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState('Nov 3');
-  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedTime, setSelectedTime] = useState('9:00 AM');
+  const [loading, setLoading] = useState(false);
 
   const days = [
     { date: 'Nov 3', day: 'Today', available: 19 },
@@ -29,27 +30,76 @@ export default function PatientBookPage() {
   ];
   const eveningSlots = ['5:00 PM', '5:15 PM', '5:45 PM', '6:00 PM', '6:30 PM'];
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!selectedDate || !selectedTime) {
       alert('Please select both date and time');
       return;
     }
 
-    // Get existing data from localStorage
-    const existingData = JSON.parse(localStorage.getItem('patient_signup_data') || '{}');
+    setLoading(true);
 
-    // Merge and save
-    localStorage.setItem(
-      'patient_signup_data',
-      JSON.stringify({
-        ...existingData,
-        selectedDate,
-        selectedTime,
-        doctorName: 'Dr. John Smith', // Mock - will be assigned by algorithm
-      })
-    );
+    try {
+      // Get existing data from localStorage
+      const existingData = JSON.parse(localStorage.getItem('patient_signup_data') || '{}');
 
-    router.push('/patient/signup/summary');
+      if (!existingData.taskId) {
+        router.push('/patient/signup');
+        return;
+      }
+
+      // Create hardcoded datetime (for POC)
+      // Using Nov 3, 2025 at selected time
+      const scheduledStartAt = new Date(`2025-11-03T${convertTo24Hour(selectedTime)}`);
+      const scheduledEndAt = new Date(scheduledStartAt.getTime() + 15 * 60 * 1000); // 15 min later
+
+      // Update task with schedule
+      const response = await fetch('/api/patient/task/schedule', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId: existingData.taskId,
+          scheduledStartAt: scheduledStartAt.toISOString(),
+          scheduledEndAt: scheduledEndAt.toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        alert('Failed to schedule appointment');
+        setLoading(false);
+        return;
+      }
+
+      // Save to localStorage and continue
+      localStorage.setItem(
+        'patient_signup_data',
+        JSON.stringify({
+          ...existingData,
+          selectedDate,
+          selectedTime,
+          doctorName: 'Dr. John Smith', // Mock - will be assigned by algorithm
+        })
+      );
+
+      router.push('/patient/signup/summary');
+    } catch (error) {
+      console.error('Failed to schedule:', error);
+      alert('An error occurred');
+      setLoading(false);
+    }
+  };
+
+  // Helper to convert 12-hour to 24-hour format
+  const convertTo24Hour = (time12h: string) => {
+    const [time, period] = time12h.split(' ');
+    let [hours, minutes] = time.split(':');
+    
+    if (period === 'PM' && hours !== '12') {
+      hours = String(parseInt(hours) + 12);
+    } else if (period === 'AM' && hours === '12') {
+      hours = '00';
+    }
+    
+    return `${hours.padStart(2, '0')}:${minutes}:00`;
   };
 
   return (
@@ -169,10 +219,10 @@ export default function PatientBookPage() {
         </button>
         <button
           onClick={handleContinue}
-          disabled={!selectedDate || !selectedTime}
+          disabled={!selectedDate || !selectedTime || loading}
           className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
-          Continue to Summary
+          {loading ? 'Scheduling...' : 'Continue to Summary'}
         </button>
       </div>
     </>
