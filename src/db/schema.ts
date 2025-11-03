@@ -26,6 +26,9 @@ export const doctors = sqliteTable('doctors', {
   // status: 'in_review' | 'active' | 'declined' | 'suspended'
   status: text('status').notNull().default('in_review'),
   isOnline: integer('is_online', { mode: 'boolean' }).notNull().default(false),
+
+  // appointment_link: the link to the appointment
+  appointmentLink: text('appointment_link'),
   
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
@@ -60,6 +63,7 @@ export const patients = sqliteTable('patients', {
   name: text('name').notNull(),
   email: text('email').notNull(),
   phone: text('phone').notNull(),
+  timezone: text('timezone').notNull(), // e.g., "America/New_York"
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
@@ -97,12 +101,15 @@ export const tasks = sqliteTable('tasks', {
   paymentStatus: text('payment_status').notNull().default('unpaid'),
   
   // Appointment-specific fields (nullable - only set if category requires appointment)
-  scheduledStartAt: integer('scheduled_start_at', { mode: 'timestamp' }), // UTC timestamp
-  scheduledEndAt: integer('scheduled_end_at', { mode: 'timestamp' }), // UTC timestamp
+  appointmentStartAt: integer('appointment_start_at', { mode: 'timestamp' }), // UTC timestamp
+  appointmentEndAt: integer('appointment_end_at', { mode: 'timestamp' }), // UTC timestamp
   reservedUntil: integer('reserved_until', { mode: 'timestamp' }), // UTC timestamp - for payment timeout
   
   // appointment_status: 'reserved' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
   appointmentStatus: text('appointment_status'),
+
+  // appointment_link: the link to the appointment
+  appointmentLink: text('appointment_link'),
   
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),

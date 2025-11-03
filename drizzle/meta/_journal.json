@@ -8,6 +8,13 @@
       "when": 1762166491446,
       "tag": "0000_sweet_brother_voodoo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1762184487383,
+      "tag": "0001_sweet_vampiro",
+      "breakpoints": true
     }
   ]
 }
