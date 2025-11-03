@@ -73,6 +73,16 @@ export default function DoctorLoginPage() {
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 placeholder:text-gray-400"
             />
+            <p className="mt-2 text-sm text-gray-500">
+              Quick login:{' '}
+              <button
+                type="button"
+                onClick={() => setEmail('doc@mail.com')}
+                className="text-green-600 hover:text-green-700 underline"
+              >
+                doc@mail.com
+              </button>
+            </p>
           </div>
 
           <button
