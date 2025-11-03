@@ -26,8 +26,8 @@ export async function PUT(req: NextRequest) {
     const [updatedTask] = await db
       .update(tasks)
       .set({
-        scheduledStartAt: new Date(scheduledStartAt),
-        scheduledEndAt: new Date(scheduledEndAt),
+        appointmentStartAt: new Date(scheduledStartAt),
+        appointmentEndAt: new Date(scheduledEndAt),
         appointmentStatus: 'reserved',
         reservedUntil: new Date(Date.now() + 15 * 60 * 1000), // 15 min from now
         updatedAt: new Date(),

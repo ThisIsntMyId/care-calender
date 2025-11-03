@@ -33,7 +33,7 @@ export async function GET(
       .where(eq(doctorBusinessHours.doctorId, doctorId));
 
     // Get category details
-    let categoryDetails = [];
+    let categoryDetails: { id: number; name: string; slug: string }[] = [];
     if (Array.isArray(doctor.categories) && doctor.categories.length > 0) {
       categoryDetails = await db
         .select({
