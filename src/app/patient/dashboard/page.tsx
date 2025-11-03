@@ -1,6 +1,31 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { isPatientAuthenticated, getPatientAuth } from '@/lib/auth/client';
+import { PatientNavbar } from '@/components/patient/PatientNavbar';
+
 export default function PatientDashboardPage() {
+  const router = useRouter();
+  const [patient, setPatient] = useState<any>(null);
+
+  useEffect(() => {
+    if (!isPatientAuthenticated()) {
+      router.push('/patient/login');
+    } else {
+      setPatient(getPatientAuth());
+    }
+  }, [router]);
+
+  const handleLogout = async () => {
+    await fetch('/api/patient/logout', { method: 'POST' });
+    router.push('/patient/login');
+  };
+
+  if (!patient) {
+    return null;
+  }
+
   // Mock data
   const appointments = [
     {
@@ -33,19 +58,25 @@ export default function PatientDashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      {/* Navbar */}
+      <PatientNavbar patient={patient} onLogout={handleLogout} />
+
+      <div className="max-w-6xl mx-auto px-8 pb-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Appointments</h1>
-          <p className="text-gray-600 mt-2">View and manage your consultations</p>
+          <h2 className="text-2xl font-bold text-gray-900">My Appointments</h2>
+          <p className="text-gray-600 mt-1">View and manage your consultations</p>
         </div>
 
         {/* Quick Actions */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <button className="w-full md:w-auto bg-green-600 text-white py-2 px-6 rounded-md hover:bg-green-700 transition">
+          <a
+            href="/patient/signup"
+            className="inline-block w-full md:w-auto bg-green-600 text-white py-2 px-6 rounded-md hover:bg-green-700 transition text-center"
+          >
             + Book New Appointment
-          </button>
+          </a>
         </div>
 
         {/* Appointments List */}
@@ -173,9 +204,12 @@ export default function PatientDashboardPage() {
         {appointments.length === 0 && (
           <div className="bg-white rounded-lg shadow-md p-12 text-center">
             <p className="text-gray-500 text-lg mb-4">No appointments yet</p>
-            <button className="bg-green-600 text-white py-2 px-6 rounded-md hover:bg-green-700 transition">
+            <a
+              href="/patient/signup"
+              className="inline-block bg-green-600 text-white py-2 px-6 rounded-md hover:bg-green-700 transition"
+            >
               Book Your First Consultation
-            </button>
+            </a>
           </div>
         )}
       </div>
