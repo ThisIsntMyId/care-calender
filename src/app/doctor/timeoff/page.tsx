@@ -112,6 +112,8 @@ export default function DoctorTimeOffPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <title>Time Off Management - Doctor - Care Calendar</title>
+      
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>

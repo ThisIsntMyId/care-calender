@@ -104,6 +104,8 @@ export default function PatientBookPage() {
 
   return (
     <>
+      <title>Schedule Appointment - Book Appointment - Care Calendar</title>
+      
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Schedule Your Consultation</h2>
       <p className="text-gray-600 mb-6">
         Appointments are 15 minutes. The first available is November 4.

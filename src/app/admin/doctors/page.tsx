@@ -52,6 +52,8 @@ export default function AdminDoctorsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
+      <title>Doctors Management - Admin - Care Calendar</title>
+      
       <div className="max-w-6xl mx-auto">
         <div className="mb-8 flex justify-between items-center">
           <div>

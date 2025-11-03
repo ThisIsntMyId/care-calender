@@ -156,6 +156,8 @@ export default function DoctorDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <title>Doctor Dashboard - Care Calendar</title>
+      
       {/* Navbar */}
       <DoctorNavbar doctor={doctor} onLogout={handleLogout} onToggleOnline={handleToggleOnline} />
 

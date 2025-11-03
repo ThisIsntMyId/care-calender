@@ -59,6 +59,8 @@ export default function PatientDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <title>My Appointments - Patient - Care Calendar</title>
+      
       {/* Navbar */}
       <PatientNavbar patient={patient} onLogout={handleLogout} />
 

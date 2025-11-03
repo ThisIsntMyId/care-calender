@@ -22,6 +22,8 @@ export default function PatientSummaryPage() {
 
   return (
     <>
+      <title>Appointment Summary - Book Appointment - Care Calendar</title>
+      
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Appointment Summary</h2>
       <p className="text-gray-600 mb-6">Review your appointment details</p>
 

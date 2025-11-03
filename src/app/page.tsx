@@ -3,6 +3,8 @@ import Link from 'next/link';
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center px-4">
+      <title>Care Calendar - Simple Appointment Booking System</title>
+      
       <div className="max-w-4xl w-full">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-gray-900 mb-4">Care Calendar</h1>

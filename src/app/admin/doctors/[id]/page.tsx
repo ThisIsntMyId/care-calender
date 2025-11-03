@@ -82,6 +82,8 @@ export default function AdminDoctorViewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <title>Doctor Details - Admin - Care Calendar</title>
+      
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">

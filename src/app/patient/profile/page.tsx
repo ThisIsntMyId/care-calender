@@ -88,6 +88,8 @@ export default function PatientProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <title>Patient Profile - Care Calendar</title>
+      
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-lg shadow-md p-8">
           <div className="flex items-center justify-between mb-6">

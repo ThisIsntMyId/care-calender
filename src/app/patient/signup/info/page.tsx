@@ -64,6 +64,8 @@ export default function PatientInfoPage() {
 
   return (
     <>
+      <title>Your Information - Book Appointment - Care Calendar</title>
+      
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Information</h2>
       <p className="text-gray-600 mb-6">Tell us about yourself</p>
 
