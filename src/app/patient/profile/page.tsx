@@ -15,6 +15,7 @@ export default function PatientProfilePage() {
     name: '',
     email: '',
     phone: '',
+    timezone: '',
   });
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function PatientProfilePage() {
             name: data.name,
             email: data.email,
             phone: data.phone,
+            timezone: data.timezone,
           });
         } else {
           router.push('/patient/login');
@@ -149,6 +151,18 @@ export default function PatientProfilePage() {
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 placeholder:text-gray-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Timezone (Read-only)
+              </label>
+              <input
+                type="text"
+                value={formData.timezone}
+                disabled
+                className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
               />
             </div>
 
