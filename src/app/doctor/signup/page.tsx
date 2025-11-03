@@ -1,8 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { isDoctorAuthenticated } from '@/lib/auth/client';
 
 export default function DoctorSignupPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -13,6 +18,13 @@ export default function DoctorSignupPage() {
     categories: [] as number[],
   });
 
+  // Check if already logged in
+  useEffect(() => {
+    if (isDoctorAuthenticated()) {
+      router.push('/doctor/dashboard');
+    }
+  }, [router]);
+
   const mockCategories = [
     { id: 1, name: 'Weight Loss' },
     { id: 2, name: 'Hair Loss' },
@@ -22,6 +34,34 @@ export default function DoctorSignupPage() {
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/doctor/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Signup failed');
+        setLoading(false);
+        return;
+      }
+
+      // Cookie is set by API, just redirect
+      router.push('/doctor/dashboard');
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-3xl mx-auto">
@@ -29,7 +69,13 @@ export default function DoctorSignupPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Doctor Signup</h1>
           <p className="text-gray-600 mb-6">Complete your profile to get started</p>
 
-          <form className="space-y-6">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Personal Information */}
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
@@ -153,47 +199,14 @@ export default function DoctorSignupPage() {
               </div>
             </div>
 
-            {/* Business Hours */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Business Hours</h2>
-              <div className="space-y-3">
-                {days.map((day) => (
-                  <div key={day} className="flex items-center gap-4">
-                    <div className="w-32">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          defaultChecked={day !== 'Saturday' && day !== 'Sunday'}
-                          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                        />
-                        <span className="text-sm font-medium text-gray-700">{day}</span>
-                      </label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="time"
-                        defaultValue="09:00"
-                        className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500"
-                      />
-                      <span className="text-gray-500">to</span>
-                      <input
-                        type="time"
-                        defaultValue="17:00"
-                        className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Submit Button */}
             <div className="flex justify-end pt-4">
               <button
                 type="submit"
-                className="bg-green-600 text-white py-2 px-8 rounded-md hover:bg-green-700 transition"
+                disabled={loading}
+                className="bg-green-600 text-white py-2 px-8 rounded-md hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                Submit for Review
+                {loading ? 'Submitting...' : 'Submit for Review'}
               </button>
             </div>
           </form>

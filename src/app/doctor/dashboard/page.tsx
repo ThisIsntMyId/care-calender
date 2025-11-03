@@ -1,8 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { isDoctorAuthenticated } from '@/lib/auth/client';
+import { DoctorNavbar } from '@/components/doctor/DoctorNavbar';
 
 export default function DoctorDashboardPage() {
+  const router = useRouter();
+  const [doctor, setDoctor] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [showTimeOffModal, setShowTimeOffModal] = useState(false);
   const [timeOffData, setTimeOffData] = useState({
     startDate: '',
@@ -11,6 +17,114 @@ export default function DoctorDashboardPage() {
     endTime: '',
     reason: '',
   });
+
+  // Check authentication and fetch doctor data
+  useEffect(() => {
+    if (!isDoctorAuthenticated()) {
+      router.push('/doctor/login');
+      return;
+    }
+
+    // Fetch fresh doctor data from API
+    const fetchDoctorData = async () => {
+      try {
+        const response = await fetch('/api/doctor/me');
+        if (response.ok) {
+          const data = await response.json();
+          setDoctor(data);
+        } else {
+          router.push('/doctor/login');
+        }
+      } catch (error) {
+        console.error('Failed to fetch doctor data:', error);
+        router.push('/doctor/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctorData();
+  }, [router]);
+
+  const handleLogout = async () => {
+    await fetch('/api/doctor/logout', { method: 'POST' });
+    router.push('/doctor/login');
+  };
+
+  const handleToggleOnline = async (isOnline: boolean) => {
+    try {
+      const response = await fetch('/api/doctor/toggle-online', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isOnline }),
+      });
+
+      if (response.ok) {
+        // Update local state
+        setDoctor({ ...doctor, isOnline });
+      }
+    } catch (error) {
+      console.error('Failed to toggle online status:', error);
+    }
+  };
+
+  const handleAddTimeOff = async () => {
+    try {
+      // Combine date and time into full datetime
+      const startDateTime = new Date(`${timeOffData.startDate}T${timeOffData.startTime}`);
+      const endDateTime = new Date(`${timeOffData.endDate}T${timeOffData.endTime}`);
+
+      const response = await fetch('/api/doctor/timeoff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startDateTime: startDateTime.toISOString(),
+          endDateTime: endDateTime.toISOString(),
+          reason: timeOffData.reason,
+        }),
+      });
+
+      if (response.ok) {
+        alert('Time off scheduled successfully!');
+        setShowTimeOffModal(false);
+        setTimeOffData({
+          startDate: '',
+          startTime: '',
+          endDate: '',
+          endTime: '',
+          reason: '',
+        });
+        // Refresh doctor data to show updated time off
+        const meResponse = await fetch('/api/doctor/me');
+        if (meResponse.ok) {
+          const data = await meResponse.json();
+          setDoctor(data);
+        }
+      } else {
+        alert('Failed to schedule time off');
+      }
+    } catch (error) {
+      console.error('Failed to add time off:', error);
+      alert('An error occurred');
+    }
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show nothing if no doctor data
+  if (!doctor) {
+    return null;
+  }
 
   // Mock data
   const tasks = [
@@ -41,13 +155,24 @@ export default function DoctorDashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Doctor Dashboard</h1>
-          <p className="text-gray-600 mt-2">Today's Appointments - November 3, 2025</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Navbar */}
+      <DoctorNavbar doctor={doctor} onLogout={handleLogout} onToggleOnline={handleToggleOnline} />
+
+      {/* Only show full dashboard if status is active */}
+      {doctor.status !== 'active' ? (
+        <div className="max-w-6xl mx-auto px-8 py-12 text-center">
+          <p className="text-gray-500 text-lg">
+            Your dashboard will be available once your account is activated.
+          </p>
         </div>
+      ) : (
+        <div className="max-w-6xl mx-auto px-8 pb-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">Today's Appointments</h2>
+            <p className="text-gray-600 mt-1">November 3, 2025</p>
+          </div>
 
         {/* Actions Bar */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -58,9 +183,16 @@ export default function DoctorDashboardPage() {
               <p className="text-sm text-gray-600">Toggle to control appointment visibility</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" defaultChecked className="sr-only peer" />
+              <input
+                type="checkbox"
+                checked={doctor.isOnline}
+                onChange={(e) => handleToggleOnline(e.target.checked)}
+                className="sr-only peer"
+              />
               <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-600"></div>
-              <span className="ml-3 text-sm font-medium text-gray-900">Online</span>
+              <span className="ml-3 text-sm font-medium text-gray-900">
+                {doctor.isOnline ? 'Online' : 'Offline'}
+              </span>
             </label>
           </div>
 
@@ -278,15 +410,7 @@ export default function DoctorDashboardPage() {
                     type="submit"
                     onClick={(e) => {
                       e.preventDefault();
-                      alert('Time off scheduled successfully!');
-                      setShowTimeOffModal(false);
-                      setTimeOffData({
-                        startDate: '',
-                        startTime: '',
-                        endDate: '',
-                        endTime: '',
-                        reason: '',
-                      });
+                      handleAddTimeOff();
                     }}
                     className="flex-1 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
                   >
@@ -297,7 +421,8 @@ export default function DoctorDashboardPage() {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,9 +6,9 @@ import { isAdminAuthenticated, getAdminAuth } from '@/lib/auth/client';
 
 export default function AdminDoctorsPage() {
   const router = useRouter();
-  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
-  const [showModal, setShowModal] = useState(false);
   const [admin, setAdmin] = useState<any>(null);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Check authentication
   useEffect(() => {
@@ -16,34 +16,22 @@ export default function AdminDoctorsPage() {
       router.push('/admin/login');
     } else {
       setAdmin(getAdminAuth());
+      fetchDoctors();
     }
   }, [router]);
 
-  // Mock data
-  const doctors = [
-    {
-      id: 1,
-      name: 'Dr. John Smith',
-      email: 'john@example.com',
-      phone: '+1234567890',
-      qualifications: 'MD, Dermatology',
-      status: 'in_review',
-      categories: ['Weight Loss', 'Skin Care'],
-    },
-    {
-      id: 2,
-      name: 'Dr. Sarah Johnson',
-      email: 'sarah@example.com',
-      phone: '+1234567891',
-      qualifications: 'MD, General Practice',
-      status: 'active',
-      categories: ['Hair Loss'],
-    },
-  ];
-
-  const handleView = (doctor: any) => {
-    setSelectedDoctor(doctor);
-    setShowModal(true);
+  const fetchDoctors = async () => {
+    try {
+      const response = await fetch('/api/admin/doctors');
+      if (response.ok) {
+        const data = await response.json();
+        setDoctors(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch doctors:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -51,8 +39,15 @@ export default function AdminDoctorsPage() {
     router.push('/admin/login');
   };
 
-  if (!admin) {
-    return null; // Or loading spinner
+  if (!admin || loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -118,74 +113,25 @@ export default function AdminDoctorsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button
-                      onClick={() => handleView(doctor)}
+                    <a
+                      href={`/admin/doctors/${doctor.id}`}
                       className="text-green-600 hover:text-green-900 font-medium"
                     >
-                      View
-                    </button>
+                      View Details →
+                    </a>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {doctors.length === 0 && (
+            <div className="p-12 text-center">
+              <p className="text-gray-500">No doctors found</p>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Modal */}
-      {showModal && selectedDoctor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">Doctor Details</h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Name</label>
-                <p className="text-gray-900">{selectedDoctor.name}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Email</label>
-                <p className="text-gray-900">{selectedDoctor.email}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Phone</label>
-                <p className="text-gray-900">{selectedDoctor.phone}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Qualifications</label>
-                <p className="text-gray-900">{selectedDoctor.qualifications}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Categories</label>
-                <p className="text-gray-900">{selectedDoctor.categories.join(', ')}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Status</label>
-                <p className="text-gray-900">{selectedDoctor.status}</p>
-              </div>
-            </div>
-
-            {selectedDoctor.status === 'in_review' && (
-              <div className="flex gap-4 mt-6">
-                <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition">
-                  Approve
-                </button>
-                <button className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition">
-                  Decline
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

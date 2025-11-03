@@ -1,32 +1,56 @@
 // Client-side auth helpers
 
-const COOKIE_NAME = 'admin_auth';
+const ADMIN_COOKIE = 'admin_auth';
+const DOCTOR_COOKIE = 'doctor_auth';
+const PATIENT_COOKIE = 'patient_auth';
 
-export type AdminAuth = {
+export type AuthUser = {
   id: number;
   email: string;
   name: string;
 };
 
-// Get admin from cookie
-export function getAdminAuth(): AdminAuth | null {
+// Helper to get cookie value
+function getCookie(cookieName: string): AuthUser | null {
   if (typeof window === 'undefined') return null;
 
   const cookies = document.cookie.split(';');
-  const adminCookie = cookies.find((c) => c.trim().startsWith(`${COOKIE_NAME}=`));
+  const cookie = cookies.find((c) => c.trim().startsWith(`${cookieName}=`));
 
-  if (!adminCookie) return null;
+  if (!cookie) return null;
 
   try {
-    const value = adminCookie.split('=')[1];
+    const value = cookie.split('=')[1];
     return JSON.parse(decodeURIComponent(value));
   } catch {
     return null;
   }
 }
 
-// Check if admin is authenticated
+// Admin
+export function getAdminAuth(): AuthUser | null {
+  return getCookie(ADMIN_COOKIE);
+}
+
 export function isAdminAuthenticated(): boolean {
   return getAdminAuth() !== null;
+}
+
+// Doctor
+export function getDoctorAuth(): AuthUser | null {
+  return getCookie(DOCTOR_COOKIE);
+}
+
+export function isDoctorAuthenticated(): boolean {
+  return getDoctorAuth() !== null;
+}
+
+// Patient
+export function getPatientAuth(): AuthUser | null {
+  return getCookie(PATIENT_COOKIE);
+}
+
+export function isPatientAuthenticated(): boolean {
+  return getPatientAuth() !== null;
 }
 
