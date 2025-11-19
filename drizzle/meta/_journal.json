@@ -15,6 +15,13 @@
       "when": 1762184487383,
       "tag": "0001_sweet_vampiro",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1763578921950,
+      "tag": "0002_yummy_black_queen",
+      "breakpoints": true
     }
   ]
 }

@@ -79,6 +79,26 @@ export const categories = sqliteTable('categories', {
   price: real('price').notNull(),
   bufferMinutes: integer('buffer_minutes').notNull().default(0), // Buffer time between appointments
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  // selectionAlgorithm: 'priority' | 'weighted' | 'random' | 'least_recently_used' | 'round_robin'
+  selectionAlgorithm: text('selection_algorithm').notNull().default('round_robin'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// ==================== DOCTOR CATEGORY ASSIGNMENTS TABLE ====================
+// Many-to-many relationship between doctors and categories
+export const doctorCategoryAssignments = sqliteTable('doctor_category_assignments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  doctorId: integer('doctor_id').notNull().references(() => doctors.id, { onDelete: 'cascade' }),
+  categoryId: integer('category_id').notNull().references(() => categories.id, { onDelete: 'cascade' }),
+  // Priority for priority algorithm (lower number = higher priority)
+  priority: integer('priority').notNull().default(100),
+  // Weight for weighted algorithm (0-100, higher = more likely to be selected)
+  weight: integer('weight').notNull().default(50),
+  // Last assigned timestamp for LRU algorithm
+  lastAssignedAt: integer('last_assigned_at', { mode: 'timestamp' }),
+  // Round robin index for round robin algorithm
+  roundRobinIndex: integer('round_robin_index').notNull().default(0),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });

@@ -1,27 +1,94 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function PatientSignupCategoryPage() {
   const router = useRouter();
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const categories = [
-    { id: 1, name: 'Weight Loss', price: 50, duration: 30 },
-    { id: 2, name: 'Hair Loss', price: 45, duration: 30 },
-    { id: 3, name: 'Skin Care', price: 60, duration: 45 },
-    { id: 4, name: 'Acne Treatment', price: 55, duration: 30 },
-  ];
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/categories');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      } else {
+        setError('Failed to load categories. Please try again.');
+      }
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+      setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSelectCategory = (category: any) => {
-    // Store in localStorage for now (we'll make it dynamic later)
     localStorage.setItem('patient_signup_data', JSON.stringify({
       categoryId: category.id,
       categoryName: category.name,
       categoryPrice: category.price,
-      categoryDuration: category.duration,
+      categoryDuration: category.durationMinutes,
     }));
     router.push('/patient/signup/info');
   };
+
+  if (loading) {
+    return (
+      <>
+        <title>Select Service - Book Appointment - Care Calendar</title>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Select a Service</h2>
+        <p className="text-gray-600 mb-6">Choose the service you need help with</p>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading categories...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <title>Select Service - Book Appointment - Care Calendar</title>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Select a Service</h2>
+        <p className="text-gray-600 mb-6">Choose the service you need help with</p>
+        <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+          <p className="text-sm text-red-600">{error}</p>
+          <button
+            onClick={fetchCategories}
+            className="mt-2 text-sm text-red-600 hover:text-red-700 underline"
+          >
+            Try again
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  if (categories.length === 0) {
+    return (
+      <>
+        <title>Select Service - Book Appointment - Care Calendar</title>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Select a Service</h2>
+        <p className="text-gray-600 mb-6">Choose the service you need help with</p>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+          <p className="text-sm text-yellow-800">No services are currently available. Please check back later.</p>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -40,9 +107,12 @@ export default function PatientSignupCategoryPage() {
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               {category.name}
             </h3>
+            {category.description && (
+              <p className="text-sm text-gray-600 mb-3">{category.description}</p>
+            )}
             <div className="flex items-center justify-between text-sm text-gray-600">
               <span>${category.price}</span>
-              <span>{category.duration} minutes</span>
+              <span>{category.durationMinutes} minutes</span>
             </div>
           </button>
         ))}

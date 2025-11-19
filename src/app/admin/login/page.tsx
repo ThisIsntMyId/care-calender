@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
   // Check if already logged in
   useEffect(() => {
     if (isAdminAuthenticated()) {
-      router.push('/admin/doctors');
+      router.push('/admin');
     }
   }, [router]);
 
@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
       }
 
       // Cookie is set by API, just redirect
-      router.push('/admin/doctors');
+      router.push('/admin');
     } catch (err) {
       setError('An error occurred. Please try again.');
       setLoading(false);

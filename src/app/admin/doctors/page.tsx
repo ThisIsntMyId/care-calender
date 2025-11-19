@@ -34,10 +34,6 @@ export default function AdminDoctorsPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await fetch('/api/admin/logout', { method: 'POST' });
-    router.push('/admin/login');
-  };
 
   if (!admin || loading) {
     return (
@@ -55,23 +51,9 @@ export default function AdminDoctorsPage() {
       <title>Doctors Management - Admin - Care Calendar</title>
       
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Doctors Management</h1>
-            <p className="text-gray-600 mt-2">Review and manage doctor applications</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm text-gray-600">Logged in as</p>
-              <p className="font-medium text-gray-900">{admin.name}</p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
-            >
-              Logout
-            </button>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Doctors Management</h1>
+          <p className="text-gray-600 mt-2">Review and manage doctor applications</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
