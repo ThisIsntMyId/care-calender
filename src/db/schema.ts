@@ -130,6 +130,9 @@ export const tasks = sqliteTable('tasks', {
   // appointment_link: the link to the appointment
   appointmentLink: text('appointment_link'),
   
+  // completedAt: timestamp when the appointment was marked as completed
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
+  
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
