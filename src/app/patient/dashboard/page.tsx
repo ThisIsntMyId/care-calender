@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isPatientAuthenticated, getPatientAuth } from '@/lib/auth/client';
 import { PatientNavbar } from '@/components/patient/PatientNavbar';
+import { displayClientDateTime } from '@/lib/date-utils';
 
 export default function PatientDashboardPage() {
   const router = useRouter();
   const [patient, setPatient] = useState<any>(null);
+  const [patientTimezone, setPatientTimezone] = useState<string>('America/New_York');
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -16,9 +18,33 @@ export default function PatientDashboardPage() {
       router.push('/patient/login');
     } else {
       setPatient(getPatientAuth());
-      fetchTasks();
+      const loadData = async () => {
+        await fetchPatientTimezone();
+      };
+      loadData();
     }
   }, [router]);
+
+  // Fetch tasks when timezone is available
+  useEffect(() => {
+    if (patientTimezone && patient) {
+      fetchTasks();
+    }
+  }, [patientTimezone, patient]);
+
+  const fetchPatientTimezone = async () => {
+    try {
+      const response = await fetch('/api/patient/profile');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.timezone) {
+          setPatientTimezone(data.timezone);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch patient timezone:', error);
+    }
+  };
 
   const fetchTasks = async () => {
     try {
@@ -26,27 +52,20 @@ export default function PatientDashboardPage() {
       if (response.ok) {
         const data = await response.json();
         // Transform tasks to appointments format
-        const transformed = data.map((task: any) => ({
-          id: task.id,
-          category: task.category?.name || 'Unknown',
-          doctorName: task.doctor?.name ? `Dr. ${task.doctor.name}` : 'Not assigned',
-          date: task.appointmentStartAt
-            ? new Date(task.appointmentStartAt).toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              })
-            : 'Not scheduled',
-          time: task.appointmentStartAt
-            ? new Date(task.appointmentStartAt).toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-              })
-            : 'Not scheduled',
-          status: task.appointmentStatus || task.status,
-          price: task.category?.price || 0,
-          task: task,
-        }));
+        const transformed = data.map((task: any) => {
+          const { date, time } = displayClientDateTime(task.appointmentStartAt, patientTimezone);
+          
+          return {
+            id: task.id,
+            category: task.category?.name || 'Unknown',
+            doctorName: task.doctor?.name ? `Dr. ${task.doctor.name}` : 'Not assigned',
+            date,
+            time,
+            status: task.appointmentStatus || task.status,
+            price: task.category?.price || 0,
+            task: task,
+          };
+        });
         setAppointments(transformed);
       }
     } catch (error) {
@@ -54,6 +73,37 @@ export default function PatientDashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancel = async (taskId: number) => {
+    if (!confirm('Are you sure you want to cancel this appointment?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/patient/task/cancel', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Failed to cancel appointment');
+        return;
+      }
+
+      // Refresh the appointments list
+      await fetchTasks();
+      alert('Appointment cancelled successfully');
+    } catch (error) {
+      console.error('Failed to cancel appointment:', error);
+      alert('An error occurred while cancelling the appointment');
+    }
+  };
+
+  const handleReschedule = (taskId: number) => {
+    router.push(`/patient/reschedule/${taskId}`);
   };
 
   const handleLogout = async () => {
@@ -195,12 +245,18 @@ export default function PatientDashboardPage() {
                   </div>
                 </div>
 
-                {appointment.status === 'confirmed' && (
+                {(appointment.status === 'confirmed' || appointment.status === 'reserved') && (
                   <div className="flex flex-col gap-2">
-                    <button className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50 transition">
+                    <button 
+                      onClick={() => handleReschedule(appointment.id)}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50 transition"
+                    >
                       Reschedule
                     </button>
-                    <button className="px-4 py-2 border border-red-300 text-red-600 text-sm rounded-md hover:bg-red-50 transition">
+                    <button 
+                      onClick={() => handleCancel(appointment.id)}
+                      className="px-4 py-2 border border-red-300 text-red-600 text-sm rounded-md hover:bg-red-50 transition"
+                    >
                       Cancel
                     </button>
                   </div>

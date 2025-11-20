@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export default function PatientBookPage() {
   const router = useRouter();
@@ -16,6 +22,9 @@ export default function PatientBookPage() {
     { date: 'Nov 6', day: 'Thu', available: 31 },
     { date: 'Nov 7', day: 'Fri', available: 11 },
     { date: 'Nov 8', day: 'Sat', available: 30 },
+    { date: 'Nov 9', day: 'Sun', available: 28 },
+    { date: 'Nov 10', day: 'Mon', available: 32 },
+    { date: 'Nov 11', day: 'Tue', available: 24 },
   ];
 
   const morningSlots = ['9:00 AM', '9:15 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM'];
@@ -47,10 +56,27 @@ export default function PatientBookPage() {
         return;
       }
 
-      // Create hardcoded datetime (for POC)
-      // Using Nov 3, 2025 at selected time
-      const scheduledStartAt = new Date(`2025-11-03T${convertTo24Hour(selectedTime)}`);
-      const scheduledEndAt = new Date(scheduledStartAt.getTime() + 15 * 60 * 1000); // 15 min later
+      // Parse date string (e.g., "Nov 3" -> "2025-11-03")
+      const [monthStr, dayStr] = selectedDate.split(' ');
+      const monthMap: { [key: string]: string } = {
+        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+        'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+        'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+      };
+      const dateStr = `2025-${monthMap[monthStr]}-${dayStr.padStart(2, '0')}`;
+      
+      // Parse time (e.g., "3:30 PM" -> "15:30")
+      const [timePart, period] = selectedTime.split(' ');
+      const [hours, minutes] = timePart.split(':').map(Number);
+      let hour24 = hours;
+      if (period === 'PM' && hours !== 12) hour24 = hours + 12;
+      if (period === 'AM' && hours === 12) hour24 = 0;
+      const timeStr = `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+      
+      // Create date in local timezone, then convert to UTC for storage
+      const localDateTime = dayjs(`${dateStr} ${timeStr}`);
+      const scheduledStartAt = localDateTime.utc();
+      const scheduledEndAt = scheduledStartAt.add(15, 'minute');
 
       // Update task with schedule
       const response = await fetch('/api/patient/task/schedule', {
@@ -88,19 +114,6 @@ export default function PatientBookPage() {
     }
   };
 
-  // Helper to convert 12-hour to 24-hour format
-  const convertTo24Hour = (time12h: string) => {
-    const [time, period] = time12h.split(' ');
-    let [hours, minutes] = time.split(':');
-    
-    if (period === 'PM' && hours !== '12') {
-      hours = String(parseInt(hours) + 12);
-    } else if (period === 'AM' && hours === '12') {
-      hours = '00';
-    }
-    
-    return `${hours.padStart(2, '0')}:${minutes}:00`;
-  };
 
   return (
     <>
