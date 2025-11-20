@@ -41,8 +41,8 @@ export default function AdminSignupPage() {
         return;
       }
 
-      // Cookie is set by API, just redirect
-      router.push('/admin/doctors');
+      // Cookie is set by API, use full page reload to ensure cookie is available
+      window.location.href = '/admin/doctors';
     } catch (err) {
       setError('An error occurred. Please try again.');
       setLoading(false);

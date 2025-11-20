@@ -38,8 +38,8 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // Cookie is set by API, just redirect
-      router.push('/admin');
+      // Cookie is set by API, use full page reload to ensure cookie is available
+      window.location.href = '/admin';
     } catch (err) {
       setError('An error occurred. Please try again.');
       setLoading(false);

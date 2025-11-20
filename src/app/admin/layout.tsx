@@ -12,18 +12,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Skip auth check on login/signup pages
+    if (pathname === '/admin/login' || pathname === '/admin/signup') {
+      setLoading(false);
+      return;
+    }
+
     if (!isAdminAuthenticated()) {
       router.push('/admin/login');
     } else {
       setAdmin(getAdminAuth());
       setLoading(false);
     }
-  }, [router]);
+  }, [router, pathname]);
 
   const handleLogout = async () => {
     await fetch('/api/admin/logout', { method: 'POST' });
     router.push('/admin/login');
   };
+
+  // Don't show sidebar on login/signup pages
+  if (pathname === '/admin/login' || pathname === '/admin/signup') {
+    return <>{children}</>;
+  }
 
   if (loading || !admin) {
     return (
@@ -34,11 +45,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </div>
     );
-  }
-
-  // Don't show sidebar on login/signup pages
-  if (pathname === '/admin/login' || pathname === '/admin/signup') {
-    return <>{children}</>;
   }
 
   const navItems = [
