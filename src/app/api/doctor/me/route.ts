@@ -52,7 +52,6 @@ export async function GET(req: NextRequest) {
       bio: doctor.bio,
       qualifications: doctor.qualifications,
       timezone: doctor.timezone,
-      categories: doctor.categories,
       status: doctor.status,
       isOnline: doctor.isOnline,
       businessHours: businessHoursData,

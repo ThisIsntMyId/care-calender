@@ -20,9 +20,6 @@ export const doctors = sqliteTable('doctors', {
   qualifications: text('qualifications').notNull(),
   timezone: text('timezone').notNull(), // e.g., "America/New_York"
   
-  // JSON column: array of category IDs [1, 3, 5]
-  categories: text('categories', { mode: 'json' }).notNull().$type<number[]>(),
-  
   // status: 'in_review' | 'active' | 'declined' | 'suspended'
   status: text('status').notNull().default('in_review'),
   isOnline: integer('is_online', { mode: 'boolean' }).notNull().default(false),

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { doctors, doctorBusinessHours, categories } from '@/db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { doctors, doctorBusinessHours, doctorCategoryAssignments, categories } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 const COOKIE_NAME = 'admin_auth';
 
@@ -32,18 +32,16 @@ export async function GET(
       .from(doctorBusinessHours)
       .where(eq(doctorBusinessHours.doctorId, doctorId));
 
-    // Get category details
-    let categoryDetails: { id: number; name: string; slug: string }[] = [];
-    if (Array.isArray(doctor.categories) && doctor.categories.length > 0) {
-      categoryDetails = await db
-        .select({
-          id: categories.id,
-          name: categories.name,
-          slug: categories.slug,
-        })
-        .from(categories)
-        .where(inArray(categories.id, doctor.categories));
-    }
+    // Get category assignments (from doctorCategoryAssignments table)
+    const categoryAssignments = await db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        slug: categories.slug,
+      })
+      .from(doctorCategoryAssignments)
+      .innerJoin(categories, eq(doctorCategoryAssignments.categoryId, categories.id))
+      .where(eq(doctorCategoryAssignments.doctorId, doctorId));
 
     return NextResponse.json({
       id: doctor.id,
@@ -53,7 +51,7 @@ export async function GET(
       bio: doctor.bio,
       qualifications: doctor.qualifications,
       timezone: doctor.timezone,
-      categories: categoryDetails,
+      categories: categoryAssignments,
       status: doctor.status,
       isOnline: doctor.isOnline,
       businessHours: businessHoursData,

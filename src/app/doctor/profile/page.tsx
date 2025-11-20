@@ -18,16 +18,8 @@ export default function DoctorProfilePage() {
     bio: '',
     qualifications: '',
     timezone: '',
-    categories: [] as number[],
   });
   const [businessHours, setBusinessHours] = useState<any[]>([]);
-
-  const mockCategories = [
-    { id: 1, name: 'Weight Loss' },
-    { id: 2, name: 'Hair Loss' },
-    { id: 3, name: 'Skin Care' },
-    { id: 4, name: 'Acne Treatment' },
-  ];
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -49,7 +41,6 @@ export default function DoctorProfilePage() {
             bio: data.bio || '',
             qualifications: data.qualifications,
             timezone: data.timezone,
-            categories: data.categories || [],
           });
           setBusinessHours(data.businessHours || []);
         } else {
@@ -225,38 +216,6 @@ export default function DoctorProfilePage() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 placeholder:text-gray-400"
                   />
                 </div>
-              </div>
-            </div>
-
-            {/* Categories */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Categories You Serve *
-              </h2>
-              <div className="grid grid-cols-2 gap-3">
-                {mockCategories.map((category) => (
-                  <label key={category.id} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.categories.includes(category.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData({
-                            ...formData,
-                            categories: [...formData.categories, category.id],
-                          });
-                        } else {
-                          setFormData({
-                            ...formData,
-                            categories: formData.categories.filter((id) => id !== category.id),
-                          });
-                        }
-                      }}
-                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-700">{category.name}</span>
-                  </label>
-                ))}
               </div>
             </div>
 

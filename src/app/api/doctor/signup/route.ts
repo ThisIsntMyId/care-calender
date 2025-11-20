@@ -8,11 +8,11 @@ const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, phone, timezone, qualifications, bio, categories } =
+    const { name, email, phone, timezone, qualifications, bio } =
       await req.json();
 
     // Validate required fields
-    if (!name || !email || !phone || !timezone || !qualifications || !categories) {
+    if (!name || !email || !phone || !timezone || !qualifications) {
       return NextResponse.json(
         { error: 'All required fields must be provided' },
         { status: 400 }
@@ -42,7 +42,6 @@ export async function POST(req: NextRequest) {
         timezone,
         qualifications,
         bio: bio || null,
-        categories: categories, // Array of category IDs
         status: 'in_review', // Default status
         isOnline: false, // Default to offline
       })

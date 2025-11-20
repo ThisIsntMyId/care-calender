@@ -33,7 +33,6 @@ export async function GET(req: NextRequest) {
       bio: doctor.bio,
       qualifications: doctor.qualifications,
       timezone: doctor.timezone,
-      categories: doctor.categories,
       businessHours: businessHoursData,
     });
   } catch (error) {
@@ -51,7 +50,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const authData = JSON.parse(cookie.value);
-    const { name, phone, bio, qualifications, timezone, categories, businessHours } = await req.json();
+    const { name, phone, bio, qualifications, timezone, businessHours } = await req.json();
 
     // Update doctor
     await db
@@ -62,7 +61,6 @@ export async function PUT(req: NextRequest) {
         bio,
         qualifications,
         timezone,
-        categories,
         updatedAt: new Date(),
       })
       .where(eq(doctors.id, authData.id));
