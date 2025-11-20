@@ -257,6 +257,7 @@ export default function AdminTaskViewPage() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
                   >
                     <option value="pending">Pending</option>
+                    <option value="scheduled">Scheduled</option>
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
@@ -289,7 +290,7 @@ export default function AdminTaskViewPage() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
                   >
                     <option value="">Not Set</option>
-                    <option value="reserved">Reserved</option>
+                    <option value="scheduled">Scheduled</option>
                     <option value="confirmed">Confirmed</option>
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>

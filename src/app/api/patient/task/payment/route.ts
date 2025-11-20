@@ -54,13 +54,15 @@ export async function PUT(req: NextRequest) {
       doctorId = selectedDoctorId;
     }
 
-    // Update task payment status and assign doctor
+    // Update task payment status, assign doctor, and set paidAt timestamp
+    // Status remains 'scheduled' - doctor will see it and mark as complete
     const [updatedTask] = await db
       .update(tasks)
       .set({
         paymentStatus: 'paid',
+        paidAt: new Date(), // Set paidAt timestamp when payment is processed
         appointmentStatus: 'confirmed',
-        status: 'pending', // Task is now pending for doctor
+        status: 'scheduled', // Status stays scheduled - doctor will mark as complete
         doctorId: doctorId,
         updatedAt: new Date(),
       })

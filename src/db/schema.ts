@@ -113,18 +113,19 @@ export const tasks = sqliteTable('tasks', {
   type: text('type'), // Service type (different from category)
   tag: text('tag'), // 'new' | 'followup' | 'evaluation' | 'appointment'
   
-  // status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
+  // status: 'pending' | 'scheduled' | 'in_progress' | 'completed' | 'cancelled'
   status: text('status').notNull().default('pending'),
   
   // payment_status: 'unpaid' | 'paid' | 'refunded' | 'failed'
   paymentStatus: text('payment_status').notNull().default('unpaid'),
+  paidAt: integer('paid_at', { mode: 'timestamp' }), // UTC timestamp - when payment was completed
   
   // Appointment-specific fields (nullable - only set if category requires appointment)
   appointmentStartAt: integer('appointment_start_at', { mode: 'timestamp' }), // UTC timestamp
   appointmentEndAt: integer('appointment_end_at', { mode: 'timestamp' }), // UTC timestamp
   reservedUntil: integer('reserved_until', { mode: 'timestamp' }), // UTC timestamp - for payment timeout
   
-  // appointment_status: 'reserved' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+  // appointment_status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
   appointmentStatus: text('appointment_status'),
 
   // appointment_link: the link to the appointment

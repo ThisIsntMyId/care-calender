@@ -245,7 +245,7 @@ export default function PatientDashboardPage() {
                   </div>
                 </div>
 
-                {(appointment.status === 'confirmed' || appointment.status === 'reserved') && (
+                {(appointment.status === 'confirmed' || appointment.status === 'scheduled') && (
                   <div className="flex flex-col gap-2">
                     <button 
                       onClick={() => handleReschedule(appointment.id)}
