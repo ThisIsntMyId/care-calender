@@ -61,6 +61,8 @@ export async function PUT(
       bufferMinutes,
       isActive,
       selectionAlgorithm,
+      nextDays,
+      concurrency,
     } = await req.json();
 
     // Validate selection algorithm if provided
@@ -69,6 +71,38 @@ export async function PUT(
       if (!validAlgorithms.includes(selectionAlgorithm)) {
         return NextResponse.json(
           { error: 'Invalid selection algorithm' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate nextDays if provided
+    if (nextDays !== undefined) {
+      const validNextDays = [7, 14, 30];
+      if (!validNextDays.includes(nextDays)) {
+        return NextResponse.json(
+          { error: 'Invalid nextDays value. Must be 7, 14, or 30' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate concurrency if provided
+    if (concurrency !== undefined) {
+      if (concurrency < 1) {
+        return NextResponse.json(
+          { error: 'Concurrency must be >= 1' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate durationMinutes if provided
+    if (durationMinutes !== undefined) {
+      const validDurations = [5, 15, 30, 45, 60];
+      if (!validDurations.includes(durationMinutes)) {
+        return NextResponse.json(
+          { error: 'Invalid duration. Must be 5, 15, 30, 45, or 60 minutes' },
           { status: 400 }
         );
       }
@@ -88,6 +122,8 @@ export async function PUT(
     if (bufferMinutes !== undefined) updateData.bufferMinutes = bufferMinutes;
     if (isActive !== undefined) updateData.isActive = isActive;
     if (selectionAlgorithm !== undefined) updateData.selectionAlgorithm = selectionAlgorithm;
+    if (nextDays !== undefined) updateData.nextDays = nextDays;
+    if (concurrency !== undefined) updateData.concurrency = concurrency;
 
     const [updatedCategory] = await db
       .update(categories)

@@ -21,6 +21,8 @@ export default function AdminCategoriesPage() {
     bufferMinutes: 0,
     isActive: true,
     selectionAlgorithm: 'round_robin',
+    nextDays: 7,
+    concurrency: 1,
   });
 
   // Check authentication
@@ -71,6 +73,8 @@ export default function AdminCategoriesPage() {
           bufferMinutes: 0,
           isActive: true,
           selectionAlgorithm: 'round_robin',
+          nextDays: 7,
+          concurrency: 1,
         });
         fetchCategories();
       } else {
@@ -270,18 +274,22 @@ export default function AdminCategoriesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Duration (minutes) *
+                    Duration *
                   </label>
-                  <input
-                    type="number"
+                  <select
                     required
-                    min="1"
                     value={formData.durationMinutes}
                     onChange={(e) =>
                       setFormData({ ...formData, durationMinutes: parseInt(e.target.value) })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 text-gray-900 placeholder:text-gray-400"
-                  />
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 text-gray-900 bg-white"
+                  >
+                    <option value="5">5 minutes</option>
+                    <option value="15">15 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="45">45 minutes</option>
+                    <option value="60">1 hour</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -298,6 +306,41 @@ export default function AdminCategoriesPage() {
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Next Days (Scheduling Window) *
+                  </label>
+                  <select
+                    required
+                    value={formData.nextDays}
+                    onChange={(e) =>
+                      setFormData({ ...formData, nextDays: parseInt(e.target.value) })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 text-gray-900 bg-white"
+                  >
+                    <option value="7">7 days</option>
+                    <option value="14">14 days</option>
+                    <option value="30">30 days</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Concurrency *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={formData.concurrency}
+                    onChange={(e) =>
+                      setFormData({ ...formData, concurrency: parseInt(e.target.value) || 1 })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 text-gray-900 placeholder:text-gray-400"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Number of concurrent bookings per doctor</p>
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Selection Algorithm *
@@ -308,12 +351,13 @@ export default function AdminCategoriesPage() {
                     setFormData({ ...formData, selectionAlgorithm: e.target.value })
                   }
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 text-gray-900 bg-white"
+                  style={{ color: '#111827' }}
                 >
-                  <option value="round_robin">Round Robin</option>
-                  <option value="priority">Priority</option>
-                  <option value="weighted">Weighted</option>
-                  <option value="random">Random</option>
-                  <option value="least_recently_used">Least Recently Used</option>
+                  <option value="round_robin" style={{ color: '#111827' }}>Round Robin</option>
+                  <option value="priority" style={{ color: '#111827' }}>Priority</option>
+                  <option value="weighted" style={{ color: '#111827' }}>Weighted</option>
+                  <option value="random" style={{ color: '#111827' }}>Random</option>
+                  <option value="least_recently_used" style={{ color: '#111827' }}>Least Recently Used</option>
                 </select>
               </div>
               <div className="flex items-center gap-4">

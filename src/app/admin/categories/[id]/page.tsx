@@ -217,7 +217,48 @@ export default function AdminCategoryViewPage() {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Duration</label>
-                <p className="text-gray-900 mt-1">{category.durationMinutes} minutes</p>
+                <div className="mt-1">
+                  <select
+                    value={category.durationMinutes || 15}
+                    onChange={(e) => handleUpdateCategory({ durationMinutes: parseInt(e.target.value) })}
+                    className="px-3 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 text-gray-900 bg-white"
+                    style={{ color: '#111827' }}
+                  >
+                    <option value="5" style={{ color: '#111827' }}>5 minutes</option>
+                    <option value="15" style={{ color: '#111827' }}>15 minutes</option>
+                    <option value="30" style={{ color: '#111827' }}>30 minutes</option>
+                    <option value="45" style={{ color: '#111827' }}>45 minutes</option>
+                    <option value="60" style={{ color: '#111827' }}>1 hour</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Next Days (Scheduling Window)</label>
+                <div className="mt-1">
+                  <select
+                    value={category.nextDays || 7}
+                    onChange={(e) => handleUpdateCategory({ nextDays: parseInt(e.target.value) })}
+                    className="px-3 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 text-gray-900 bg-white"
+                    style={{ color: '#111827' }}
+                  >
+                    <option value="7" style={{ color: '#111827' }}>7 days</option>
+                    <option value="14" style={{ color: '#111827' }}>14 days</option>
+                    <option value="30" style={{ color: '#111827' }}>30 days</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Concurrency</label>
+                <div className="mt-1">
+                  <input
+                    type="number"
+                    min="1"
+                    value={category.concurrency || 1}
+                    onChange={(e) => handleUpdateCategory({ concurrency: parseInt(e.target.value) || 1 })}
+                    className="px-3 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 text-gray-900"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Concurrent bookings per doctor</p>
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Selection Algorithm</label>
@@ -225,13 +266,14 @@ export default function AdminCategoryViewPage() {
                   <select
                     value={category.selectionAlgorithm || 'round_robin'}
                     onChange={(e) => handleUpdateCategory({ selectionAlgorithm: e.target.value })}
-                    className="px-3 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+                    className="px-3 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 text-gray-900 bg-white"
+                    style={{ color: '#111827' }}
                   >
-                    <option value="round_robin">Round Robin</option>
-                    <option value="priority">Priority</option>
-                    <option value="weighted">Weighted</option>
-                    <option value="random">Random</option>
-                    <option value="least_recently_used">Least Recently Used</option>
+                    <option value="round_robin" style={{ color: '#111827' }}>Round Robin</option>
+                    <option value="priority" style={{ color: '#111827' }}>Priority</option>
+                    <option value="weighted" style={{ color: '#111827' }}>Weighted</option>
+                    <option value="random" style={{ color: '#111827' }}>Random</option>
+                    <option value="least_recently_used" style={{ color: '#111827' }}>Least Recently Used</option>
                   </select>
                 </div>
               </div>

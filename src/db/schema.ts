@@ -71,13 +71,15 @@ export const categories = sqliteTable('categories', {
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
   description: text('description'),
-  durationMinutes: integer('duration_minutes').notNull().default(15),
+  durationMinutes: integer('duration_minutes').notNull().default(15), // Duration for each appointment in minutes
   requiresAppointment: integer('requires_appointment', { mode: 'boolean' }).notNull().default(true),
   price: real('price').notNull(),
   bufferMinutes: integer('buffer_minutes').notNull().default(0), // Buffer time between appointments
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   // selectionAlgorithm: 'priority' | 'weighted' | 'random' | 'least_recently_used' | 'round_robin'
   selectionAlgorithm: text('selection_algorithm').notNull().default('round_robin'),
+  nextDays: integer('next_days').notNull().default(7), // How far in the future can schedule (7, 14, 30 days)
+  concurrency: integer('concurrency').notNull().default(1), // How many concurrent bookings a doctor can handle (>= 1)
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });

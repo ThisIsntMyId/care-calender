@@ -42,6 +42,8 @@ export async function POST(req: NextRequest) {
       bufferMinutes,
       isActive,
       selectionAlgorithm,
+      nextDays,
+      concurrency,
     } = await req.json();
 
     // Validate required fields
@@ -62,6 +64,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate nextDays
+    const validNextDays = [7, 14, 30];
+    const daysValue = nextDays || 7;
+    if (!validNextDays.includes(daysValue)) {
+      return NextResponse.json(
+        { error: 'Invalid nextDays value. Must be 7, 14, or 30' },
+        { status: 400 }
+      );
+    }
+
+    // Validate concurrency
+    const concurrencyValue = concurrency || 1;
+    if (concurrencyValue < 1) {
+      return NextResponse.json(
+        { error: 'Concurrency must be >= 1' },
+        { status: 400 }
+      );
+    }
+
+    // Validate durationMinutes (must be one of the allowed values)
+    const validDurations = [5, 15, 30, 45, 60];
+    const durationValue = durationMinutes || 15;
+    if (!validDurations.includes(durationValue)) {
+      return NextResponse.json(
+        { error: 'Invalid duration. Must be 5, 15, 30, 45, or 60 minutes' },
+        { status: 400 }
+      );
+    }
+
     // Create category
     const [newCategory] = await db
       .insert(categories)
@@ -69,12 +100,14 @@ export async function POST(req: NextRequest) {
         name,
         slug,
         description: description || null,
-        durationMinutes: durationMinutes || 15,
+        durationMinutes: durationValue,
         requiresAppointment: requiresAppointment !== false,
         price,
         bufferMinutes: bufferMinutes || 0,
         isActive: isActive !== false,
         selectionAlgorithm: algorithm,
+        nextDays: daysValue,
+        concurrency: concurrencyValue,
       })
       .returning();
 
