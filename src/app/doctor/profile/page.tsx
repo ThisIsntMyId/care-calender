@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { isDoctorAuthenticated } from '@/lib/auth/client';
+import { getTimezoneOptions } from '@/lib/timezones';
 
 export default function DoctorProfilePage() {
   const router = useRouter();
@@ -11,6 +12,7 @@ export default function DoctorProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [timezoneOptions, setTimezoneOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -28,6 +30,10 @@ export default function DoctorProfilePage() {
       router.push('/doctor/login');
       return;
     }
+
+    // Get timezone options
+    const options = getTimezoneOptions();
+    setTimezoneOptions(options);
 
     const fetchProfile = async () => {
       try {
@@ -178,10 +184,14 @@ export default function DoctorProfilePage() {
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
                   >
-                    <option value="America/New_York">Eastern Time (ET)</option>
-                    <option value="America/Chicago">Central Time (CT)</option>
-                    <option value="America/Denver">Mountain Time (MT)</option>
-                    <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                    {timezoneOptions.length === 0 && (
+                      <option value="">Loading timezones...</option>
+                    )}
+                    {timezoneOptions.map((tz) => (
+                      <option key={tz.value} value={tz.value}>
+                        {tz.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

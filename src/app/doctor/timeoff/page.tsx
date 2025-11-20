@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { isDoctorAuthenticated } from '@/lib/auth/client';
-import { format } from 'date-fns';
+import dayjs from 'dayjs';
 
 export default function DoctorTimeOffPage() {
   const router = useRouter();
@@ -175,10 +175,10 @@ export default function DoctorTimeOffPage() {
                     <div className="space-y-1 text-sm text-gray-600">
                       <p>
                         <strong>From:</strong>{' '}
-                        {format(startDate, 'MMMM d, yyyy \'at\' h:mm a')}
+                        {dayjs(startDate).format('MMMM D, YYYY [at] h:mm A')}
                       </p>
                       <p>
-                        <strong>To:</strong> {format(endDate, 'MMMM d, yyyy \'at\' h:mm a')}
+                        <strong>To:</strong> {dayjs(endDate).format('MMMM D, YYYY [at] h:mm A')}
                       </p>
                     </div>
                   </div>

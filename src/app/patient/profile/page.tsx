@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { isPatientAuthenticated } from '@/lib/auth/client';
+import { getTimezoneOptions } from '@/lib/timezones';
 
 export default function PatientProfilePage() {
   const router = useRouter();
@@ -11,6 +12,7 @@ export default function PatientProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [timezoneOptions, setTimezoneOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,6 +25,10 @@ export default function PatientProfilePage() {
       router.push('/patient/login');
       return;
     }
+
+    // Get timezone options
+    const options = getTimezoneOptions();
+    setTimezoneOptions(options);
 
     const fetchProfile = async () => {
       try {
@@ -158,14 +164,23 @@ export default function PatientProfilePage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Timezone (Read-only)
+                Timezone *
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.timezone}
-                disabled
-                className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
-              />
+                onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+              >
+                {timezoneOptions.length === 0 && (
+                  <option value="">Loading timezones...</option>
+                )}
+                {timezoneOptions.map((tz) => (
+                  <option key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex justify-end gap-4 pt-4">

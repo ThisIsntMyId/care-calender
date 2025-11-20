@@ -3,28 +3,59 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isDoctorAuthenticated } from '@/lib/auth/client';
+// UPDATE: Import the detection utility
+import { getTimezoneOptions, guessUserTimezone } from '@/lib/timezones';
 
 export default function DoctorSignupPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [timezoneOptions, setTimezoneOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     bio: '',
     qualifications: '',
-    timezone: 'America/New_York',
+    timezone: '',
   });
 
-  // Check if already logged in
+  // Check if already logged in and initialize timezones
   useEffect(() => {
     if (isDoctorAuthenticated()) {
       router.push('/doctor/dashboard');
+      return;
+    }
+    
+    // Get timezone options first
+    const options = getTimezoneOptions();
+    setTimezoneOptions(options);
+    
+    // Auto-detect timezone on client side after options are loaded
+    if (typeof window !== 'undefined') {
+      // UPDATE: Use the robust detection function
+      const detectedTimezone = guessUserTimezone();
+      
+      // Verify detected timezone exists in options
+      const timezoneExists = options.some(opt => opt.value === detectedTimezone);
+      
+      // Prioritize: 1. Valid Detected, 2. NY, 3. First Option
+      const defaultTimezone = timezoneExists 
+        ? detectedTimezone 
+        : (options.find(opt => opt.value === 'America/New_York')?.value || options[0]?.value || 'America/New_York');
+      
+      // Set the detected timezone as default
+      if (defaultTimezone) {
+        setFormData((prev) => ({
+          ...prev,
+          timezone: defaultTimezone,
+        }));
+      }
     }
   }, [router]);
 
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  // Note: You can remove the dayjs imports if they aren't used elsewhere in this file anymore,
+  // as guessUserTimezone handles the detection now.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,12 +148,17 @@ export default function DoctorSignupPage() {
                   <select
                     value={formData.timezone}
                     onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 placeholder:text-gray-400"
                   >
-                    <option value="America/New_York">Eastern Time (ET)</option>
-                    <option value="America/Chicago">Central Time (CT)</option>
-                    <option value="America/Denver">Mountain Time (MT)</option>
-                    <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                    {timezoneOptions.length === 0 && (
+                      <option value="">Loading timezones...</option>
+                    )}
+                    {timezoneOptions.map((tz) => (
+                      <option key={tz.value} value={tz.value}>
+                        {tz.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -177,4 +213,3 @@ export default function DoctorSignupPage() {
     </div>
   );
 }
-

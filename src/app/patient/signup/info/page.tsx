@@ -3,38 +3,78 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isPatientAuthenticated, getPatientAuth } from '@/lib/auth/client';
+// UPDATE: Import the new guess detection function
+import { getTimezoneOptions, guessUserTimezone } from '@/lib/timezones';
 
 export default function PatientInfoPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [timezoneOptions, setTimezoneOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    timezone: 'America/New_York',
+    timezone: '',
   });
 
   useEffect(() => {
+    // Get timezone options
+    const options = getTimezoneOptions();
+    setTimezoneOptions(options);
+    
+    // Helper to safely get a valid timezone or fallback
+    const getValidTimezone = (preferredTz: string | null) => {
+      if (preferredTz && options.some(opt => opt.value === preferredTz)) {
+        return preferredTz;
+      }
+      // Fallback to NY or first option
+      return options.find(opt => opt.value === 'America/New_York')?.value || options[0]?.value || 'America/New_York';
+    };
+
     // Check if patient is already logged in
     if (isPatientAuthenticated()) {
       const patient = getPatientAuth();
       setIsLoggedIn(true);
+      
       // Pre-fill form with patient data
       fetch('/api/patient/profile')
         .then((res) => res.json())
         .then((data) => {
           if (data) {
+            // 1. Try DB timezone, 2. Try robust browser detection
+            let timezoneToUse = data.timezone;
+            
+            if (!timezoneToUse && typeof window !== 'undefined') {
+              // UPDATE: Use the normalized guess function
+              timezoneToUse = guessUserTimezone(); 
+            }
+            
             setFormData({
               name: data.name || '',
               email: data.email || '',
               phone: data.phone || '',
-              timezone: data.timezone || 'America/New_York',
+              timezone: getValidTimezone(timezoneToUse),
             });
           }
         })
         .catch((err) => console.error('Failed to fetch profile:', err));
+    } else {
+      // Auto-detect timezone for new signups on client side
+      if (typeof window !== 'undefined') {
+        // UPDATE: Use the normalized guess function
+        const detectedTimezone = guessUserTimezone();
+        
+        const finalTimezone = getValidTimezone(detectedTimezone);
+        
+        if (finalTimezone) {
+          setFormData((prev) => ({
+            ...prev,
+            timezone: finalTimezone,
+          }));
+        }
+      }
     }
   }, []);
 
@@ -179,10 +219,14 @@ export default function PatientInfoPage() {
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
           >
-            <option value="America/New_York">Eastern Time (ET)</option>
-            <option value="America/Chicago">Central Time (CT)</option>
-            <option value="America/Denver">Mountain Time (MT)</option>
-            <option value="America/Los_Angeles">Pacific Time (PT)</option>
+            {timezoneOptions.length === 0 && (
+              <option value="">Loading timezones...</option>
+            )}
+            {timezoneOptions.map((tz) => (
+              <option key={tz.value} value={tz.value}>
+                {tz.label}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -206,4 +250,3 @@ export default function PatientInfoPage() {
     </>
   );
 }
-

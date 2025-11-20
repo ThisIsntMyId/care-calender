@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@libsql/client": "^0.15.15",
-    "date-fns": "^4.1.0",
+    "@vvo/tzdb": "^6.196.0",
+    "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
     "next": "16.0.1",
