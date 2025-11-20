@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { categories } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 
 const COOKIE_NAME = 'admin_auth';
 
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const allCategories = await db.select().from(categories).orderBy(categories.name);
+    const allCategories = await db.select().from(categories).orderBy(desc(categories.createdAt));
 
     return NextResponse.json(allCategories);
   } catch (error) {

@@ -11,6 +11,8 @@ export default function DoctorDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<any[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'today' | 'scheduled' | 'unscheduled'>('today');
+  const [scheduledSortBy, setScheduledSortBy] = useState<'appointment' | 'created'>('appointment');
   const [showTimeOffModal, setShowTimeOffModal] = useState(false);
   const [timeOffData, setTimeOffData] = useState({
     startDate: '',
@@ -50,9 +52,17 @@ export default function DoctorDashboardPage() {
 
   const fetchTasks = async () => {
     try {
-      // Get today's date in YYYY-MM-DD format
-      const today = new Date().toISOString().split('T')[0];
-      const response = await fetch(`/api/doctor/tasks?date=${today}`);
+      setTasksLoading(true);
+      // Build query params based on active tab
+      const params = new URLSearchParams();
+      params.set('filter', activeTab);
+      
+      // Add sortBy for scheduled tab
+      if (activeTab === 'scheduled') {
+        params.set('sortBy', scheduledSortBy);
+      }
+
+      const response = await fetch(`/api/doctor/tasks?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         // Transform tasks to display format
@@ -66,6 +76,13 @@ export default function DoctorDashboardPage() {
                 minute: '2-digit',
               })
             : 'Not scheduled',
+          date: task.appointmentStartAt
+            ? new Date(task.appointmentStartAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })
+            : null,
           status: task.appointmentStatus || task.status,
           type: task.tag || 'appointment',
           task: task,
@@ -83,7 +100,8 @@ export default function DoctorDashboardPage() {
     if (doctor && doctor.status === 'active') {
       fetchTasks();
     }
-  }, [doctor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doctor, activeTab, scheduledSortBy]);
 
   const handleLogout = async () => {
     await fetch('/api/doctor/logout', { method: 'POST' });
@@ -183,8 +201,8 @@ export default function DoctorDashboardPage() {
         <div className="max-w-6xl mx-auto px-8 pb-8">
           {/* Header */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Today's Appointments</h2>
-            <p className="text-gray-600 mt-1">November 3, 2025</p>
+            <h2 className="text-2xl font-bold text-gray-900">Appointments & Tasks</h2>
+            <p className="text-gray-600 mt-1">Manage your appointments and tasks</p>
           </div>
 
         {/* Actions Bar */}
@@ -239,10 +257,69 @@ export default function DoctorDashboardPage() {
 
         {/* Tasks List */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Today's Tasks ({tasksLoading ? '...' : tasks.length})
-            </h2>
+          {/* Tabs */}
+          <div className="border-b border-gray-200">
+            <div className="flex">
+              <button
+                onClick={() => setActiveTab('today')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition ${
+                  activeTab === 'today'
+                    ? 'border-green-600 text-green-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Today {activeTab === 'today' && (tasksLoading ? '(...)' : `(${tasks.length})`)}
+              </button>
+              <button
+                onClick={() => setActiveTab('scheduled')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition ${
+                  activeTab === 'scheduled'
+                    ? 'border-green-600 text-green-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Scheduled {activeTab === 'scheduled' && (tasksLoading ? '(...)' : `(${tasks.length})`)}
+              </button>
+              <button
+                onClick={() => setActiveTab('unscheduled')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition ${
+                  activeTab === 'unscheduled'
+                    ? 'border-green-600 text-green-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Unscheduled {activeTab === 'unscheduled' && (tasksLoading ? '(...)' : `(${tasks.length})`)}
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content Header */}
+          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {activeTab === 'today' && "Today's Tasks"}
+                {activeTab === 'scheduled' && 'Scheduled Tasks'}
+                {activeTab === 'unscheduled' && 'Unscheduled Tasks'}
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                {activeTab === 'today' && 'Tasks scheduled for today'}
+                {activeTab === 'scheduled' && 'All tasks with scheduled appointments'}
+                {activeTab === 'unscheduled' && 'Tasks waiting to be scheduled'}
+              </p>
+            </div>
+            {activeTab === 'scheduled' && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600">Sort by:</label>
+                <select
+                  value={scheduledSortBy}
+                  onChange={(e) => setScheduledSortBy(e.target.value as 'appointment' | 'created')}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-white"
+                >
+                  <option value="appointment">Appointment Time</option>
+                  <option value="created">Created Date</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {tasksLoading ? (
@@ -252,7 +329,11 @@ export default function DoctorDashboardPage() {
             </div>
           ) : tasks.length === 0 ? (
             <div className="p-12 text-center">
-              <p className="text-gray-500 text-lg">No appointments scheduled for today</p>
+              <p className="text-gray-500 text-lg">
+                {activeTab === 'today' && 'No appointments scheduled for today'}
+                {activeTab === 'scheduled' && 'No scheduled appointments found'}
+                {activeTab === 'unscheduled' && 'No unscheduled tasks found'}
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
@@ -267,6 +348,24 @@ export default function DoctorDashboardPage() {
                         </span>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
+                        {task.date && (
+                          <span className="flex items-center gap-1">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                            {task.date}
+                          </span>
+                        )}
                         <span className="flex items-center gap-1">
                           <svg
                             className="w-4 h-4"

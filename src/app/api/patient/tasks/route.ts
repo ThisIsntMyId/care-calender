@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { tasks, categories, doctors, patients } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 
 const COOKIE_NAME = 'patient_auth';
 
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
       .leftJoin(categories, eq(tasks.categoryId, categories.id))
       .leftJoin(doctors, eq(tasks.doctorId, doctors.id))
       .where(eq(tasks.patientId, authData.id))
-      .orderBy(tasks.createdAt);
+      .orderBy(desc(tasks.createdAt));
 
     return NextResponse.json(patientTasks);
   } catch (error) {

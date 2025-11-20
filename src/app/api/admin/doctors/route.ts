@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { doctors } from '@/db/schema';
+import { desc } from 'drizzle-orm';
 
 const COOKIE_NAME = 'admin_auth';
 
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get all doctors
-    const allDoctors = await db.select().from(doctors);
+    const allDoctors = await db.select().from(doctors).orderBy(desc(doctors.createdAt));
 
     return NextResponse.json(allDoctors);
   } catch (error) {

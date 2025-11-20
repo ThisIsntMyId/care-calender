@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { tasks, categories, patients } from '@/db/schema';
-import { eq, and, gte, lte } from 'drizzle-orm';
+import { eq, and, gte, lte, desc, or, isNull, isNotNull, asc } from 'drizzle-orm';
 
 const COOKIE_NAME = 'doctor_auth';
 
@@ -15,22 +15,44 @@ export async function GET(req: NextRequest) {
 
     const authData = JSON.parse(cookie.value);
     const { searchParams } = new URL(req.url);
-    const date = searchParams.get('date'); // Optional: filter by date (YYYY-MM-DD)
+    const filter = searchParams.get('filter'); // 'today' | 'scheduled' | 'unscheduled'
+    const sortBy = searchParams.get('sortBy'); // 'appointment' | 'created' (for scheduled tab)
 
     // Build where conditions
     const whereConditions: any[] = [eq(tasks.doctorId, authData.id)];
 
-    // If date is provided, filter tasks for that date
-    if (date) {
-      const startOfDay = new Date(date);
+    // Apply filter based on mode
+    if (filter === 'today') {
+      // Tasks scheduled for today
+      const today = new Date();
+      const startOfDay = new Date(today);
       startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
+      const endOfDay = new Date(today);
       endOfDay.setHours(23, 59, 59, 999);
 
       whereConditions.push(
-        gte(tasks.appointmentStartAt, startOfDay),
-        lte(tasks.appointmentStartAt, endOfDay)
+        and(
+          isNotNull(tasks.appointmentStartAt),
+          gte(tasks.appointmentStartAt, startOfDay),
+          lte(tasks.appointmentStartAt, endOfDay)
+        )
       );
+    } else if (filter === 'scheduled') {
+      // All tasks with appointments scheduled
+      whereConditions.push(isNotNull(tasks.appointmentStartAt));
+    } else if (filter === 'unscheduled') {
+      // Tasks without appointments scheduled
+      whereConditions.push(isNull(tasks.appointmentStartAt));
+    }
+
+    // Determine ordering
+    let orderBy;
+    if (filter === 'scheduled' && sortBy === 'appointment') {
+      // Sort by appointment time (earliest first)
+      orderBy = asc(tasks.appointmentStartAt);
+    } else {
+      // Default: sort by created at (latest first)
+      orderBy = desc(tasks.createdAt);
     }
 
     const doctorTasks = await db
@@ -44,6 +66,7 @@ export async function GET(req: NextRequest) {
         appointmentEndAt: tasks.appointmentEndAt,
         appointmentStatus: tasks.appointmentStatus,
         tag: tasks.tag,
+        createdAt: tasks.createdAt,
         category: {
           id: categories.id,
           name: categories.name,
@@ -59,7 +82,7 @@ export async function GET(req: NextRequest) {
       .leftJoin(categories, eq(tasks.categoryId, categories.id))
       .leftJoin(patients, eq(tasks.patientId, patients.id))
       .where(and(...whereConditions))
-      .orderBy(tasks.appointmentStartAt);
+      .orderBy(orderBy);
 
     return NextResponse.json(doctorTasks);
   } catch (error) {
