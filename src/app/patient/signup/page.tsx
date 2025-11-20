@@ -2,14 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { isPatientAuthenticated, getPatientAuth } from '@/lib/auth/client';
 
 export default function PatientSignupCategoryPage() {
   const router = useRouter();
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [patient, setPatient] = useState<any>(null);
 
   useEffect(() => {
+    // Check if patient is already logged in
+    if (isPatientAuthenticated()) {
+      setIsLoggedIn(true);
+      setPatient(getPatientAuth());
+    }
     fetchCategories();
   }, []);
 
@@ -32,14 +40,46 @@ export default function PatientSignupCategoryPage() {
     }
   };
 
-  const handleSelectCategory = (category: any) => {
-    localStorage.setItem('patient_signup_data', JSON.stringify({
-      categoryId: category.id,
-      categoryName: category.name,
-      categoryPrice: category.price,
-      categoryDuration: category.durationMinutes,
-    }));
-    router.push('/patient/signup/info');
+  const handleSelectCategory = async (category: any) => {
+    if (isLoggedIn && patient) {
+      // Patient is logged in - create task directly and skip info step
+      try {
+        const response = await fetch('/api/patient/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            categoryId: category.id,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          localStorage.setItem('patient_signup_data', JSON.stringify({
+            categoryId: category.id,
+            categoryName: category.name,
+            categoryPrice: category.price,
+            categoryDuration: category.durationMinutes,
+            taskId: data.taskId,
+            ...patient,
+          }));
+          router.push('/patient/signup/book');
+        } else {
+          alert('Failed to create appointment. Please try again.');
+        }
+      } catch (err) {
+        console.error('Failed to create task:', err);
+        alert('An error occurred. Please try again.');
+      }
+    } else {
+      // Patient not logged in - go to info step
+      localStorage.setItem('patient_signup_data', JSON.stringify({
+        categoryId: category.id,
+        categoryName: category.name,
+        categoryPrice: category.price,
+        categoryDuration: category.durationMinutes,
+      }));
+      router.push('/patient/signup/info');
+    }
   };
 
   if (loading) {

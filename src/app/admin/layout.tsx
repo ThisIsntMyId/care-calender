@@ -45,6 +45,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin', label: 'Dashboard', icon: '📊' },
     { href: '/admin/doctors', label: 'Doctors', icon: '👨‍⚕️' },
     { href: '/admin/categories', label: 'Categories', icon: '📁' },
+    { href: '/admin/tasks', label: 'Tasks', icon: '📋' },
   ];
 
   return (

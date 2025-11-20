@@ -17,6 +17,8 @@ export default function DoctorSignupPage() {
     timezone: 'America/New_York',
     categories: [] as number[],
   });
+  const [categories, setCategories] = useState<Array<{ id: number; name: string }>>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   // Check if already logged in
   useEffect(() => {
@@ -25,12 +27,23 @@ export default function DoctorSignupPage() {
     }
   }, [router]);
 
-  const mockCategories = [
-    { id: 1, name: 'Weight Loss' },
-    { id: 2, name: 'Hair Loss' },
-    { id: 3, name: 'Skin Care' },
-    { id: 4, name: 'Acne Treatment' },
-  ];
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -174,31 +187,40 @@ export default function DoctorSignupPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Select Categories You Serve *
               </h2>
-              <div className="grid grid-cols-2 gap-3">
-                {mockCategories.map((category) => (
-                  <label key={category.id} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.categories.includes(category.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData({
-                            ...formData,
-                            categories: [...formData.categories, category.id],
-                          });
-                        } else {
-                          setFormData({
-                            ...formData,
-                            categories: formData.categories.filter((id) => id !== category.id),
-                          });
-                        }
-                      }}
-                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-700">{category.name}</span>
-                  </label>
-                ))}
-              </div>
+              {categoriesLoading ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-600">Loading categories...</p>
+                </div>
+              ) : categories.length === 0 ? (
+                <p className="text-sm text-gray-500">No categories available. Please contact admin.</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {categories.map((category) => (
+                    <label key={category.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.categories.includes(category.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({
+                              ...formData,
+                              categories: [...formData.categories, category.id],
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              categories: formData.categories.filter((id) => id !== category.id),
+                            });
+                          }
+                        }}
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-700">{category.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}

@@ -2,17 +2,41 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { isPatientAuthenticated, getPatientAuth } from '@/lib/auth/client';
 
 export default function PatientInfoPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     timezone: 'America/New_York',
   });
+
+  useEffect(() => {
+    // Check if patient is already logged in
+    if (isPatientAuthenticated()) {
+      const patient = getPatientAuth();
+      setIsLoggedIn(true);
+      // Pre-fill form with patient data
+      fetch('/api/patient/profile')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data) {
+            setFormData({
+              name: data.name || '',
+              email: data.email || '',
+              phone: data.phone || '',
+              timezone: data.timezone || 'America/New_York',
+            });
+          }
+        })
+        .catch((err) => console.error('Failed to fetch profile:', err));
+    }
+  }, []);
 
   const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,34 +52,62 @@ export default function PatientInfoPage() {
         return;
       }
 
-      // Create patient account and task
-      const response = await fetch('/api/patient/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (isLoggedIn) {
+        // Patient is logged in - just create task
+        const response = await fetch('/api/patient/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            categoryId: signupData.categoryId,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || 'Failed to create appointment');
+          setLoading(false);
+          return;
+        }
+
+        // Store task ID in localStorage
+        localStorage.setItem('patient_signup_data', JSON.stringify({
+          ...signupData,
           ...formData,
-          categoryId: signupData.categoryId,
-        }),
-      });
+          taskId: data.taskId,
+        }));
 
-      const data = await response.json();
+        router.push('/patient/signup/book');
+      } else {
+        // Create patient account and task
+        const response = await fetch('/api/patient/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...formData,
+            categoryId: signupData.categoryId,
+          }),
+        });
 
-      if (!response.ok) {
-        setError(data.error || 'Signup failed');
-        setLoading(false);
-        return;
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || 'Signup failed');
+          setLoading(false);
+          return;
+        }
+
+        // Store task ID and timezone in localStorage
+        localStorage.setItem('patient_signup_data', JSON.stringify({
+          ...signupData,
+          ...formData,
+          taskId: data.taskId,
+          timezone: data.timezone,
+        }));
+
+        // Cookie is set by API, redirect to booking
+        router.push('/patient/signup/book');
       }
-
-      // Store task ID and timezone in localStorage
-      localStorage.setItem('patient_signup_data', JSON.stringify({
-        ...signupData,
-        ...formData,
-        taskId: data.taskId,
-        timezone: data.timezone,
-      }));
-
-      // Cookie is set by API, redirect to booking
-      router.push('/patient/signup/book');
     } catch (err) {
       setError('An error occurred. Please try again.');
       setLoading(false);
@@ -67,7 +119,9 @@ export default function PatientInfoPage() {
       <title>Your Information - Book Appointment - Care Calendar</title>
       
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Information</h2>
-      <p className="text-gray-600 mb-6">Tell us about yourself</p>
+      <p className="text-gray-600 mb-6">
+        {isLoggedIn ? 'Confirm your information' : 'Tell us about yourself'}
+      </p>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
@@ -145,7 +199,7 @@ export default function PatientInfoPage() {
             disabled={loading}
             className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {loading ? 'Creating Account...' : 'Continue'}
+            {loading ? (isLoggedIn ? 'Creating Appointment...' : 'Creating Account...') : 'Continue'}
           </button>
         </div>
       </form>

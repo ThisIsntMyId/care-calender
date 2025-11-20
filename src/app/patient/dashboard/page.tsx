@@ -8,54 +8,69 @@ import { PatientNavbar } from '@/components/patient/PatientNavbar';
 export default function PatientDashboardPage() {
   const router = useRouter();
   const [patient, setPatient] = useState<any>(null);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isPatientAuthenticated()) {
       router.push('/patient/login');
     } else {
       setPatient(getPatientAuth());
+      fetchTasks();
     }
   }, [router]);
+
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch('/api/patient/tasks');
+      if (response.ok) {
+        const data = await response.json();
+        // Transform tasks to appointments format
+        const transformed = data.map((task: any) => ({
+          id: task.id,
+          category: task.category?.name || 'Unknown',
+          doctorName: task.doctor?.name ? `Dr. ${task.doctor.name}` : 'Not assigned',
+          date: task.appointmentStartAt
+            ? new Date(task.appointmentStartAt).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })
+            : 'Not scheduled',
+          time: task.appointmentStartAt
+            ? new Date(task.appointmentStartAt).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+              })
+            : 'Not scheduled',
+          status: task.appointmentStatus || task.status,
+          price: task.category?.price || 0,
+          task: task,
+        }));
+        setAppointments(transformed);
+      }
+    } catch (error) {
+      console.error('Failed to fetch tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await fetch('/api/patient/logout', { method: 'POST' });
     router.push('/patient/login');
   };
 
-  if (!patient) {
-    return null;
+  if (!patient || loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
-
-  // Mock data
-  const appointments = [
-    {
-      id: 1,
-      category: 'Weight Loss',
-      doctorName: 'Dr. John Smith',
-      date: 'November 3, 2025',
-      time: '9:00 AM',
-      status: 'confirmed',
-      price: 50,
-    },
-    {
-      id: 2,
-      category: 'Skin Care',
-      doctorName: 'Dr. Sarah Johnson',
-      date: 'November 10, 2025',
-      time: '2:00 PM',
-      status: 'confirmed',
-      price: 60,
-    },
-    {
-      id: 3,
-      category: 'Hair Loss',
-      doctorName: 'Dr. Mike Williams',
-      date: 'October 28, 2025',
-      time: '11:00 AM',
-      status: 'completed',
-      price: 45,
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
