@@ -10,15 +10,16 @@
     "format": "biome format --write",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@libsql/client": "^0.15.15",
     "@vvo/tzdb": "^6.196.0",
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
     "next": "16.0.1",
+    "postgres": "^3.4.7",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
@@ -26,6 +27,7 @@
     "@biomejs/biome": "2.2.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.15.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
