@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isDoctorAuthenticated } from '@/lib/auth/client';
 import { DoctorNavbar } from '@/components/doctor/DoctorNavbar';
+import { displayClientDateTime, getTimezoneAbbreviation } from '@/lib/date-utils';
 
 export default function DoctorDashboardPage() {
   const router = useRouter();
@@ -65,37 +66,41 @@ export default function DoctorDashboardPage() {
       const response = await fetch(`/api/doctor/tasks?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
+        // Get doctor's timezone (default to browser timezone if not available)
+        const doctorTimezone = doctor?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
         // Transform tasks to display format
-        const transformed = data.map((task: any) => ({
-          id: task.id,
-          patientName: task.patient?.name || 'Unknown',
-          category: task.category?.name || 'Unknown',
-          time: task.appointment?.startAt
-            ? new Date(task.appointment.startAt).toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-              })
-            : 'Not scheduled',
-          date: task.appointment?.startAt
-            ? new Date(task.appointment.startAt).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })
-            : null,
-          completedAt: task.completedAt
-            ? new Date(task.completedAt).toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-              })
-            : null,
-          status: task.appointment?.status || task.status,
-          type: task.tag || 'appointment',
-          task: task,
-        }));
+        const transformed = data.map((task: any) => {
+          let date = null;
+          let time = 'Not scheduled';
+          let timezoneAbbr = '';
+          let completedAt = null;
+
+          if (task.appointment?.startAt) {
+            const dt = displayClientDateTime(task.appointment.startAt, doctorTimezone);
+            date = dt.date;
+            time = dt.time;
+            timezoneAbbr = dt.timezoneAbbr;
+          }
+
+          if (task.completedAt) {
+            const completedDt = displayClientDateTime(task.completedAt, doctorTimezone);
+            completedAt = `${completedDt.date} at ${completedDt.time} ${completedDt.timezoneAbbr ? `(${completedDt.timezoneAbbr})` : ''}`;
+          }
+
+          return {
+            id: task.id,
+            patientName: task.patient?.name || 'Unknown',
+            category: task.category?.name || 'Unknown',
+            time,
+            date,
+            timezoneAbbr,
+            completedAt,
+            status: task.appointment?.status || task.status,
+            type: task.tag || 'appointment',
+            task: task,
+          };
+        });
         setTasks(transformed);
       }
     } catch (error) {
@@ -423,6 +428,9 @@ export default function DoctorDashboardPage() {
                             />
                           </svg>
                           {task.time}
+                          {task.timezoneAbbr && (
+                            <span className="text-gray-500">({task.timezoneAbbr})</span>
+                          )}
                         </span>
                         <span className="flex items-center gap-1">
                           <svg

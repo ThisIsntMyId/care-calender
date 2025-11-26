@@ -53,14 +53,15 @@ export default function PatientDashboardPage() {
         const data = await response.json();
         // Transform tasks to appointments format
         const transformed = data.map((task: any) => {
-          const { date, time } = displayClientDateTime(task.appointment?.startAt, patientTimezone);
+          const dt = displayClientDateTime(task.appointment?.startAt, patientTimezone);
           
           return {
             id: task.id,
             category: task.category?.name || 'Unknown',
             doctorName: task.doctor?.name ? `Dr. ${task.doctor.name}` : 'Not assigned',
-            date,
-            time,
+            date: dt.date,
+            time: dt.time,
+            timezoneAbbr: dt.timezoneAbbr,
             status: task.appointment?.status || task.status,
             price: task.category?.price || 0,
             task: task,
@@ -81,7 +82,7 @@ export default function PatientDashboardPage() {
     }
 
     try {
-      const response = await fetch('/api/patient/task/cancel', {
+      const response = await fetch('/api/patient/appointment/cancel', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId }),
@@ -222,6 +223,9 @@ export default function PatientDashboardPage() {
                       </svg>
                       <span>
                         <span className="font-medium">Time:</span> {appointment.time}
+                        {appointment.timezoneAbbr && (
+                          <span className="text-gray-500 ml-1">({appointment.timezoneAbbr})</span>
+                        )}
                       </span>
                     </p>
                     <p className="flex items-center gap-2">

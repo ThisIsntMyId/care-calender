@@ -2,17 +2,60 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { displayClientDateTime, getTimezoneAbbreviation } from '@/lib/date-utils';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export default function PatientSummaryPage() {
   const router = useRouter();
   const [signupData, setSignupData] = useState<any>(null);
+  const [patientTimezone, setPatientTimezone] = useState<string>('America/New_York');
+  const [appointmentData, setAppointmentData] = useState<any>(null);
 
   useEffect(() => {
     const data = JSON.parse(localStorage.getItem('patient_signup_data') || '{}');
-    if (!data.categoryId || !data.name || !data.selectedDate) {
+    if (!data.categoryId || !data.name) {
       router.push('/patient/signup');
       return;
     }
+
+    // Fetch patient timezone and appointment details
+    const fetchData = async () => {
+      try {
+        // Get patient timezone
+        const profileResponse = await fetch('/api/patient/profile');
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          if (profileData.timezone) {
+            setPatientTimezone(profileData.timezone);
+          }
+        }
+
+        // Fetch task details to get appointment and doctor info
+        if (data.taskId) {
+          const tasksResponse = await fetch('/api/patient/tasks');
+          if (tasksResponse.ok) {
+            const tasks = await tasksResponse.json();
+            const task = tasks.find((t: any) => t.id === data.taskId);
+            if (task) {
+              setAppointmentData({
+                appointment: task.appointment,
+                doctor: task.doctor,
+                category: task.category,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch appointment data:', error);
+      }
+    };
+
+    fetchData();
     setSignupData(data);
   }, [router]);
 
@@ -84,16 +127,40 @@ export default function PatientSummaryPage() {
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Date:</span>
               <span className="font-medium text-gray-900">
-                Monday, {signupData.selectedDate}, 2025
+                {appointmentData?.appointment?.startAt
+                  ? displayClientDateTime(appointmentData.appointment.startAt, patientTimezone).date
+                  : signupData.appointmentDate || signupData.selectedDate || 'Not scheduled'}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Time:</span>
-              <span className="font-medium text-gray-900">{signupData.selectedTime}</span>
+              <span className="font-medium text-gray-900">
+                {appointmentData?.appointment?.startAt
+                  ? (() => {
+                      const dt = displayClientDateTime(appointmentData.appointment.startAt, patientTimezone);
+                      return `${dt.time} ${dt.timezoneAbbr ? `(${dt.timezoneAbbr})` : ''}`;
+                    })()
+                  : signupData.appointmentTime || signupData.selectedSlot || 'Not scheduled'}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Doctor:</span>
-              <span className="font-medium text-gray-900">{signupData.doctorName}</span>
+              <span className="font-medium text-gray-900">
+                {appointmentData?.doctor?.name
+                  ? `Dr. ${appointmentData.doctor.name}`
+                  : signupData.doctorName || 'Not assigned'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Timezone:</span>
+              <span className="font-medium text-gray-900">
+                {patientTimezone.split('/').pop()?.replace('_', ' ')} 
+                {appointmentData?.appointment?.startAt && (
+                  <span className="text-gray-500 ml-1">
+                    ({getTimezoneAbbreviation(patientTimezone, new Date(appointmentData.appointment.startAt))})
+                  </span>
+                )}
+              </span>
             </div>
           </div>
         </div>
