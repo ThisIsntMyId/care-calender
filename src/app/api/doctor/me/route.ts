@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { doctors, doctorBusinessHours, doctorTimeOff } from '@/db/schema';
-import { eq, gte } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 const COOKIE_NAME = 'doctor_auth';
 
