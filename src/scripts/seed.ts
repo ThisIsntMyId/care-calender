@@ -47,7 +47,7 @@ async function seedCategories() {
       slug: 'general-consultation',
       description: 'General health consultation and check-up',
       durationMinutes: 30,
-      price: 100.0,
+      price: '100.0',
       bufferMinutes: 15,
     },
     {
@@ -55,7 +55,7 @@ async function seedCategories() {
       slug: 'mental-health',
       description: 'Mental health and wellness consultation',
       durationMinutes: 45,
-      price: 150.0,
+      price: '150.0',
       bufferMinutes: 15,
     },
     {
@@ -63,7 +63,7 @@ async function seedCategories() {
       slug: 'pediatrics',
       description: 'Child healthcare and consultation',
       durationMinutes: 30,
-      price: 120.0,
+      price: '120.0',
       bufferMinutes: 10,
     },
     {
@@ -71,7 +71,7 @@ async function seedCategories() {
       slug: 'cardiology',
       description: 'Heart and cardiovascular health consultation',
       durationMinutes: 45,
-      price: 200.0,
+      price: '200.0',
       bufferMinutes: 15,
     },
     {
@@ -79,7 +79,7 @@ async function seedCategories() {
       slug: 'dermatology',
       description: 'Skin health and dermatology consultation',
       durationMinutes: 20,
-      price: 130.0,
+      price: '130.0',
       bufferMinutes: 10,
     },
     {
@@ -87,7 +87,7 @@ async function seedCategories() {
       slug: 'orthopedics',
       description: 'Bone and joint health consultation',
       durationMinutes: 30,
-      price: 180.0,
+      price: '180.0',
       bufferMinutes: 15,
     },
   ];
