@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { tasks, patients, doctors, categories } from '@/db/schema';
+import { tasks, patients, doctors, categories, appointments } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 
 const COOKIE_NAME = 'admin_auth';
@@ -23,12 +23,15 @@ export async function GET(req: NextRequest) {
         tag: tasks.tag,
         status: tasks.status,
         paymentStatus: tasks.paymentStatus,
-        appointmentStartAt: tasks.appointmentStartAt,
-        appointmentEndAt: tasks.appointmentEndAt,
-        appointmentStatus: tasks.appointmentStatus,
-        appointmentLink: tasks.appointmentLink,
         createdAt: tasks.createdAt,
         updatedAt: tasks.updatedAt,
+        appointment: {
+          id: appointments.id,
+          startAt: appointments.startAt,
+          endAt: appointments.endAt,
+          status: appointments.status,
+          link: appointments.link,
+        },
         patient: {
           id: patients.id,
           name: patients.name,
@@ -50,6 +53,7 @@ export async function GET(req: NextRequest) {
       .leftJoin(patients, eq(tasks.patientId, patients.id))
       .leftJoin(doctors, eq(tasks.doctorId, doctors.id))
       .leftJoin(categories, eq(tasks.categoryId, categories.id))
+      .leftJoin(appointments, eq(tasks.id, appointments.taskId))
       .orderBy(desc(tasks.createdAt));
 
     return NextResponse.json(allTasks);

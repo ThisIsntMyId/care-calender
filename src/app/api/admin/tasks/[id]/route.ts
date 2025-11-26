@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { tasks, patients, doctors, categories } from '@/db/schema';
+import { tasks, patients, doctors, categories, appointments } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { getTaskAppointment, createAppointment } from '@/lib/appointments';
 
 const COOKIE_NAME = 'admin_auth';
 
@@ -32,13 +33,16 @@ export async function GET(
         tag: tasks.tag,
         status: tasks.status,
         paymentStatus: tasks.paymentStatus,
-        appointmentStartAt: tasks.appointmentStartAt,
-        appointmentEndAt: tasks.appointmentEndAt,
         reservedUntil: tasks.reservedUntil,
-        appointmentStatus: tasks.appointmentStatus,
-        appointmentLink: tasks.appointmentLink,
         createdAt: tasks.createdAt,
         updatedAt: tasks.updatedAt,
+        appointment: {
+          id: appointments.id,
+          startAt: appointments.startAt,
+          endAt: appointments.endAt,
+          status: appointments.status,
+          link: appointments.link,
+        },
         patient: {
           id: patients.id,
           name: patients.name,
@@ -60,6 +64,7 @@ export async function GET(
       .leftJoin(patients, eq(tasks.patientId, patients.id))
       .leftJoin(doctors, eq(tasks.doctorId, doctors.id))
       .leftJoin(categories, eq(tasks.categoryId, categories.id))
+      .leftJoin(appointments, eq(tasks.id, appointments.taskId))
       .where(eq(tasks.id, taskId))
       .limit(1);
 
@@ -91,6 +96,17 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid task ID' }, { status: 400 });
     }
 
+    // Get task first to check if it exists
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+
+    if (!task) {
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+    }
+
     const body = await req.json();
     const {
       doctorId,
@@ -99,6 +115,7 @@ export async function PUT(
       appointmentStatus,
       appointmentStartAt,
       appointmentEndAt,
+      appointmentLink,
     } = body;
 
     const updateData: any = {
@@ -110,12 +127,46 @@ export async function PUT(
     }
     if (status !== undefined) updateData.status = status;
     if (paymentStatus !== undefined) updateData.paymentStatus = paymentStatus;
-    if (appointmentStatus !== undefined) updateData.appointmentStatus = appointmentStatus;
-    if (appointmentStartAt !== undefined) {
-      updateData.appointmentStartAt = appointmentStartAt ? new Date(appointmentStartAt) : null;
-    }
-    if (appointmentEndAt !== undefined) {
-      updateData.appointmentEndAt = appointmentEndAt ? new Date(appointmentEndAt) : null;
+
+    // Update or create appointment
+    const existingAppointment = await getTaskAppointment(taskId);
+    
+    if (appointmentStartAt && appointmentEndAt) {
+      if (existingAppointment) {
+        // Update existing appointment
+        await db
+          .update(appointments)
+          .set({
+            startAt: new Date(appointmentStartAt),
+            endAt: new Date(appointmentEndAt),
+            status: appointmentStatus || existingAppointment.status,
+            link: appointmentLink !== undefined ? appointmentLink : existingAppointment.link,
+            doctorId: updateData.doctorId !== undefined ? updateData.doctorId : existingAppointment.doctorId,
+            updatedAt: new Date(),
+          })
+          .where(eq(appointments.id, existingAppointment.id));
+      } else {
+        // Create new appointment
+        await createAppointment({
+          taskId: taskId,
+          patientId: task.patientId,
+          doctorId: updateData.doctorId !== undefined ? updateData.doctorId : task.doctorId,
+          categoryId: task.categoryId,
+          startAt: new Date(appointmentStartAt),
+          endAt: new Date(appointmentEndAt),
+          status: appointmentStatus || 'scheduled',
+          link: appointmentLink,
+        });
+      }
+    } else if (existingAppointment && appointmentStatus !== undefined) {
+      // Update appointment status only
+      await db
+        .update(appointments)
+        .set({
+          status: appointmentStatus,
+          updatedAt: new Date(),
+        })
+        .where(eq(appointments.id, existingAppointment.id));
     }
 
     const updated = await db

@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { tasks, categories } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { selectDoctorForCategory } from '@/lib/doctor-selection';
+import { createAppointment } from '@/lib/appointments';
 
 const COOKIE_NAME = 'patient_auth';
 
@@ -27,6 +28,7 @@ export async function PUT(req: NextRequest) {
     const [task] = await db
       .select({
         id: tasks.id,
+        patientId: tasks.patientId,
         categoryId: tasks.categoryId,
         doctorId: tasks.doctorId,
       })
@@ -63,13 +65,21 @@ export async function PUT(req: NextRequest) {
       doctorId = selectedDoctorId;
     }
 
-    // Update task with appointment details, assign doctor, and set status to scheduled
+    // Create appointment record
+    const appointment = await createAppointment({
+      taskId: taskId,
+      patientId: task.patientId,
+      doctorId: doctorId,
+      categoryId: task.categoryId,
+      startAt: new Date(scheduledStartAt),
+      endAt: new Date(scheduledEndAt),
+      status: 'scheduled',
+    });
+
+    // Update task: assign doctor, set status to scheduled, and set payment timeout
     const [updatedTask] = await db
       .update(tasks)
       .set({
-        appointmentStartAt: new Date(scheduledStartAt),
-        appointmentEndAt: new Date(scheduledEndAt),
-        appointmentStatus: 'scheduled', // Appointment status
         status: 'scheduled', // Task status is now scheduled (appointment is scheduled)
         doctorId: doctorId, // Assign the selected doctor
         reservedUntil: new Date(Date.now() + 15 * 60 * 1000), // 15 min from now (for payment timeout)
@@ -87,7 +97,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, task: updatedTask });
+    return NextResponse.json({ success: true, task: updatedTask, appointment });
   } catch (error) {
     console.error('Schedule task error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

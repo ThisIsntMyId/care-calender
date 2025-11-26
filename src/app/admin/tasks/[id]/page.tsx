@@ -43,12 +43,12 @@ export default function AdminTaskViewPage() {
           doctorId: data.doctorId || '',
           status: data.status || '',
           paymentStatus: data.paymentStatus || '',
-          appointmentStatus: data.appointmentStatus || '',
-          appointmentStartAt: data.appointmentStartAt
-            ? new Date(data.appointmentStartAt).toISOString().slice(0, 16)
+          appointmentStatus: data.appointment?.status || '',
+          appointmentStartAt: data.appointment?.startAt
+            ? new Date(data.appointment.startAt).toISOString().slice(0, 16)
             : '',
-          appointmentEndAt: data.appointmentEndAt
-            ? new Date(data.appointmentEndAt).toISOString().slice(0, 16)
+          appointmentEndAt: data.appointment?.endAt
+            ? new Date(data.appointment.endAt).toISOString().slice(0, 16)
             : '',
         });
       } else {
@@ -88,13 +88,13 @@ export default function AdminTaskViewPage() {
       if (formData.paymentStatus !== task.paymentStatus) {
         updateData.paymentStatus = formData.paymentStatus;
       }
-      if (formData.appointmentStatus !== task.appointmentStatus) {
+      if (formData.appointmentStatus !== (task.appointment?.status || '')) {
         updateData.appointmentStatus = formData.appointmentStatus;
       }
-      if (formData.appointmentStartAt !== (task.appointmentStartAt ? new Date(task.appointmentStartAt).toISOString().slice(0, 16) : '')) {
+      if (formData.appointmentStartAt !== (task.appointment?.startAt ? new Date(task.appointment.startAt).toISOString().slice(0, 16) : '')) {
         updateData.appointmentStartAt = formData.appointmentStartAt || null;
       }
-      if (formData.appointmentEndAt !== (task.appointmentEndAt ? new Date(task.appointmentEndAt).toISOString().slice(0, 16) : '')) {
+      if (formData.appointmentEndAt !== (task.appointment?.endAt ? new Date(task.appointment.endAt).toISOString().slice(0, 16) : '')) {
         updateData.appointmentEndAt = formData.appointmentEndAt || null;
       }
 
@@ -374,16 +374,16 @@ export default function AdminTaskViewPage() {
                   <label className="text-sm font-medium text-gray-500">Updated At</label>
                   <p className="text-gray-900">{formatDate(task.updatedAt)}</p>
                 </div>
-                {task.appointmentLink && (
+                {task.appointment?.link && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Appointment Link</label>
                     <a
-                      href={task.appointmentLink}
+                      href={task.appointment.link}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-green-600 hover:text-green-700 break-all"
                     >
-                      {task.appointmentLink}
+                      {task.appointment.link}
                     </a>
                   </div>
                 )}

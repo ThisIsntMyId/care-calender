@@ -160,10 +160,10 @@ export default function AdminTasksPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {task.appointmentStartAt ? formatDate(task.appointmentStartAt) : 'Not scheduled'}
+                        {task.appointment?.startAt ? formatDate(task.appointment.startAt) : 'Not scheduled'}
                       </div>
-                      {task.appointmentStatus && (
-                        <div className="text-xs text-gray-500">{task.appointmentStatus}</div>
+                      {task.appointment?.status && (
+                        <div className="text-xs text-gray-500">{task.appointment.status}</div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

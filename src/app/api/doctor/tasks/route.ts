@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { tasks, categories, patients } from '@/db/schema';
+import { tasks, categories, patients, appointments } from '@/db/schema';
 import { eq, and, gte, lte, desc, or, isNull, isNotNull, asc, not } from 'drizzle-orm';
 
 const COOKIE_NAME = 'doctor_auth';
@@ -32,35 +32,35 @@ export async function GET(req: NextRequest) {
 
       whereConditions.push(
         and(
-          isNotNull(tasks.appointmentStartAt),
-          gte(tasks.appointmentStartAt, startOfDay),
-          lte(tasks.appointmentStartAt, endOfDay)
+          isNotNull(appointments.startAt),
+          gte(appointments.startAt, startOfDay),
+          lte(appointments.startAt, endOfDay)
         )
       );
     } else if (filter === 'scheduled') {
       // All tasks with appointments scheduled (excluding completed)
       whereConditions.push(
         and(
-          isNotNull(tasks.appointmentStartAt),
+          isNotNull(appointments.id),
           or(
-            isNull(tasks.appointmentStatus),
-            not(eq(tasks.appointmentStatus, 'completed'))
+            isNull(appointments.status),
+            not(eq(appointments.status, 'completed'))
           )
         )
       );
     } else if (filter === 'unscheduled') {
       // Tasks without appointments scheduled
-      whereConditions.push(isNull(tasks.appointmentStartAt));
+      whereConditions.push(isNull(appointments.id));
     } else if (filter === 'completed') {
       // Tasks that are completed
-      whereConditions.push(eq(tasks.appointmentStatus, 'completed'));
+      whereConditions.push(eq(appointments.status, 'completed'));
     }
 
     // Determine ordering
     let orderBy;
     if (filter === 'scheduled' && sortBy === 'appointment') {
       // Sort by appointment time (earliest first)
-      orderBy = asc(tasks.appointmentStartAt);
+      orderBy = asc(appointments.startAt);
     } else if (filter === 'completed') {
       // Sort completed tasks by completedAt (most recent first)
       orderBy = desc(tasks.completedAt);
@@ -76,12 +76,15 @@ export async function GET(req: NextRequest) {
         categoryId: tasks.categoryId,
         status: tasks.status,
         paymentStatus: tasks.paymentStatus,
-        appointmentStartAt: tasks.appointmentStartAt,
-        appointmentEndAt: tasks.appointmentEndAt,
-        appointmentStatus: tasks.appointmentStatus,
         completedAt: tasks.completedAt,
         tag: tasks.tag,
         createdAt: tasks.createdAt,
+        appointment: {
+          id: appointments.id,
+          startAt: appointments.startAt,
+          endAt: appointments.endAt,
+          status: appointments.status,
+        },
         category: {
           id: categories.id,
           name: categories.name,
@@ -96,6 +99,7 @@ export async function GET(req: NextRequest) {
       .from(tasks)
       .leftJoin(categories, eq(tasks.categoryId, categories.id))
       .leftJoin(patients, eq(tasks.patientId, patients.id))
+      .leftJoin(appointments, eq(tasks.id, appointments.taskId))
       .where(and(...whereConditions))
       .orderBy(orderBy);
 

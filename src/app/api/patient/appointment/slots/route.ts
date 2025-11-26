@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { categories, tasks, doctorCategoryAssignments, doctors, doctorBusinessHours, doctorTimeOff } from '@/db/schema';
+import { categories, appointments, doctorCategoryAssignments, doctors, doctorBusinessHours, doctorTimeOff } from '@/db/schema';
 import { eq, and, gte, lte, inArray, or } from 'drizzle-orm';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -150,21 +150,21 @@ async function getAppointments(categoryId: number, date: dayjs.Dayjs) {
 
   return await db
     .select({
-      id: tasks.id,
-      doctorId: tasks.doctorId,
-      appointmentStartAt: tasks.appointmentStartAt,
-      appointmentEndAt: tasks.appointmentEndAt,
-      appointmentStatus: tasks.appointmentStatus,
+      id: appointments.id,
+      doctorId: appointments.doctorId,
+      startAt: appointments.startAt,
+      endAt: appointments.endAt,
+      status: appointments.status,
     })
-    .from(tasks)
+    .from(appointments)
     .where(
       and(
-        eq(tasks.categoryId, categoryId),
-        gte(tasks.appointmentStartAt, queryStart),
-        lte(tasks.appointmentStartAt, queryEnd),
+        eq(appointments.categoryId, categoryId),
+        gte(appointments.startAt, queryStart),
+        lte(appointments.startAt, queryEnd),
         or(
-          eq(tasks.appointmentStatus, 'scheduled'),
-          eq(tasks.appointmentStatus, 'confirmed')
+          eq(appointments.status, 'scheduled'),
+          eq(appointments.status, 'confirmed')
         )
       )
     );
@@ -332,8 +332,8 @@ export async function GET(req: NextRequest) {
         // c. Check Appointments
         const docAppts = appointmentsByDoc[doctor.id] || [];
         const conflictCount = docAppts.filter(apt => {
-            const aptStart = dayjs(apt.appointmentStartAt);
-            const aptEnd = dayjs(apt.appointmentEndAt);
+            const aptStart = dayjs(apt.startAt);
+            const aptEnd = dayjs(apt.endAt);
             return slot.start.isBefore(aptEnd) && slot.end.isAfter(aptStart);
         }).length;
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { tasks, categories, doctors, patients } from '@/db/schema';
+import { tasks, categories, doctors, patients, appointments } from '@/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
 const COOKIE_NAME = 'patient_auth';
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
     const authData = JSON.parse(cookie.value);
 
-    // Get all tasks for this patient with category and doctor info
+    // Get all tasks for this patient with category, doctor, and appointment info
     const patientTasks = await db
       .select({
         id: tasks.id,
@@ -23,9 +23,12 @@ export async function GET(req: NextRequest) {
         doctorId: tasks.doctorId,
         status: tasks.status,
         paymentStatus: tasks.paymentStatus,
-        appointmentStartAt: tasks.appointmentStartAt,
-        appointmentEndAt: tasks.appointmentEndAt,
-        appointmentStatus: tasks.appointmentStatus,
+        appointment: {
+          id: appointments.id,
+          startAt: appointments.startAt,
+          endAt: appointments.endAt,
+          status: appointments.status,
+        },
         category: {
           id: categories.id,
           name: categories.name,
@@ -40,6 +43,7 @@ export async function GET(req: NextRequest) {
       .from(tasks)
       .leftJoin(categories, eq(tasks.categoryId, categories.id))
       .leftJoin(doctors, eq(tasks.doctorId, doctors.id))
+      .leftJoin(appointments, eq(tasks.id, appointments.taskId))
       .where(eq(tasks.patientId, authData.id))
       .orderBy(desc(tasks.createdAt));
 

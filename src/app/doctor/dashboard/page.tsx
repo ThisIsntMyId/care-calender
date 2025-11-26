@@ -70,14 +70,14 @@ export default function DoctorDashboardPage() {
           id: task.id,
           patientName: task.patient?.name || 'Unknown',
           category: task.category?.name || 'Unknown',
-          time: task.appointmentStartAt
-            ? new Date(task.appointmentStartAt).toLocaleTimeString('en-US', {
+          time: task.appointment?.startAt
+            ? new Date(task.appointment.startAt).toLocaleTimeString('en-US', {
                 hour: 'numeric',
                 minute: '2-digit',
               })
             : 'Not scheduled',
-          date: task.appointmentStartAt
-            ? new Date(task.appointmentStartAt).toLocaleDateString('en-US', {
+          date: task.appointment?.startAt
+            ? new Date(task.appointment.startAt).toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric',
@@ -92,7 +92,7 @@ export default function DoctorDashboardPage() {
                 minute: '2-digit',
               })
             : null,
-          status: task.appointmentStatus || task.status,
+          status: task.appointment?.status || task.status,
           type: task.tag || 'appointment',
           task: task,
         }));
@@ -464,7 +464,7 @@ export default function DoctorDashboardPage() {
                         <span className="px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">
                         {task.status}
                       </span>
-                      {activeTab !== 'completed' && task.status !== 'completed' && task.appointmentStatus !== 'completed' && (
+                      {activeTab !== 'completed' && task.status !== 'completed' && task.appointment?.status !== 'completed' && (
                         <button
                           onClick={() => handleMarkAsCompleted(task.id)}
                           className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition"

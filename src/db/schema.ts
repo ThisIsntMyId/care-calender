@@ -102,7 +102,7 @@ export const doctorCategoryAssignments = sqliteTable('doctor_category_assignment
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
 
-// ==================== TASKS TABLE (with appointment fields) ====================
+// ==================== TASKS TABLE ====================
 export const tasks = sqliteTable('tasks', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   patientId: integer('patient_id').notNull().references(() => patients.id, { onDelete: 'cascade' }),
@@ -120,19 +120,32 @@ export const tasks = sqliteTable('tasks', {
   paymentStatus: text('payment_status').notNull().default('unpaid'),
   paidAt: integer('paid_at', { mode: 'timestamp' }), // UTC timestamp - when payment was completed
   
-  // Appointment-specific fields (nullable - only set if category requires appointment)
-  appointmentStartAt: integer('appointment_start_at', { mode: 'timestamp' }), // UTC timestamp
-  appointmentEndAt: integer('appointment_end_at', { mode: 'timestamp' }), // UTC timestamp
+  // Payment timeout - for reserving slots during payment process
   reservedUntil: integer('reserved_until', { mode: 'timestamp' }), // UTC timestamp - for payment timeout
   
-  // appointment_status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
-  appointmentStatus: text('appointment_status'),
-
-  // appointment_link: the link to the appointment
-  appointmentLink: text('appointment_link'),
-  
-  // completedAt: timestamp when the appointment was marked as completed
+  // completedAt: timestamp when the task was marked as completed
   completedAt: integer('completed_at', { mode: 'timestamp' }),
+  
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// ==================== APPOINTMENTS TABLE ====================
+export const appointments = sqliteTable('appointments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  taskId: integer('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+  
+  // Duplicated for direct appointment queries (denormalization for performance)
+  patientId: integer('patient_id').notNull().references(() => patients.id, { onDelete: 'cascade' }),
+  doctorId: integer('doctor_id').references(() => doctors.id, { onDelete: 'set null' }),
+  categoryId: integer('category_id').notNull().references(() => categories.id, { onDelete: 'restrict' }),
+  
+  // Appointment-specific fields
+  startAt: integer('start_at', { mode: 'timestamp' }).notNull(), // UTC timestamp
+  endAt: integer('end_at', { mode: 'timestamp' }).notNull(), // UTC timestamp
+  // status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+  status: text('status').notNull().default('scheduled'),
+  link: text('link'), // appointment_link
   
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),

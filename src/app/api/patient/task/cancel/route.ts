@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { tasks } from '@/db/schema';
+import { tasks, appointments } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { getTaskAppointment } from '@/lib/appointments';
 
 const COOKIE_NAME = 'patient_auth';
 
@@ -22,12 +23,23 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Update appointment status to cancelled
+    const appointment = await getTaskAppointment(taskId);
+    if (appointment) {
+      await db
+        .update(appointments)
+        .set({
+          status: 'cancelled',
+          updatedAt: new Date(),
+        })
+        .where(eq(appointments.id, appointment.id));
+    }
+
     // Update task status to cancelled
     const [updatedTask] = await db
       .update(tasks)
       .set({
         status: 'cancelled',
-        appointmentStatus: 'cancelled',
         updatedAt: new Date(),
       })
       .where(

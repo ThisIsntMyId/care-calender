@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { tasks, categories } from '@/db/schema';
+import { tasks, categories, appointments } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { selectDoctorForCategory } from '@/lib/doctor-selection';
+import { getTaskAppointment } from '@/lib/appointments';
 
 const COOKIE_NAME = 'patient_auth';
 
@@ -54,6 +55,19 @@ export async function PUT(req: NextRequest) {
       doctorId = selectedDoctorId;
     }
 
+    // Update appointment status to confirmed
+    const appointment = await getTaskAppointment(taskId);
+    if (appointment) {
+      await db
+        .update(appointments)
+        .set({
+          status: 'confirmed',
+          doctorId: doctorId, // Update doctor in appointment if changed
+          updatedAt: new Date(),
+        })
+        .where(eq(appointments.id, appointment.id));
+    }
+
     // Update task payment status, assign doctor, and set paidAt timestamp
     // Status remains 'scheduled' - doctor will see it and mark as complete
     const [updatedTask] = await db
@@ -61,7 +75,6 @@ export async function PUT(req: NextRequest) {
       .set({
         paymentStatus: 'paid',
         paidAt: new Date(), // Set paidAt timestamp when payment is processed
-        appointmentStatus: 'confirmed',
         status: 'scheduled', // Status stays scheduled - doctor will mark as complete
         doctorId: doctorId,
         updatedAt: new Date(),

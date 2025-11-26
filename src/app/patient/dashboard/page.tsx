@@ -53,7 +53,7 @@ export default function PatientDashboardPage() {
         const data = await response.json();
         // Transform tasks to appointments format
         const transformed = data.map((task: any) => {
-          const { date, time } = displayClientDateTime(task.appointmentStartAt, patientTimezone);
+          const { date, time } = displayClientDateTime(task.appointment?.startAt, patientTimezone);
           
           return {
             id: task.id,
@@ -61,7 +61,7 @@ export default function PatientDashboardPage() {
             doctorName: task.doctor?.name ? `Dr. ${task.doctor.name}` : 'Not assigned',
             date,
             time,
-            status: task.appointmentStatus || task.status,
+            status: task.appointment?.status || task.status,
             price: task.category?.price || 0,
             task: task,
           };
